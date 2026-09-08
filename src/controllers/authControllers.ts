@@ -72,7 +72,7 @@ const registrationController = async (req: Request, res: Response) => {
   );
 
   await sendVerificationEmail(user.email, user.fullName, verificationToken);
-  
+
   return res.status(201).json({
     success: true,
     message: "Your account has been created successfully. Welcome to EcoBazar!",
@@ -81,6 +81,60 @@ const registrationController = async (req: Request, res: Response) => {
 
 const loginController = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email });
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid email or password.",
+    });
+  }
+
+  const passwordCompare = bcrypt.compareSync(password, user.password);
+
+  if (!passwordCompare) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid email or password.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Login successful. Welcome back!",
+    data: {
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    },
+  });
 };
 
-export { registrationController, loginController };
+const verifyController = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const decodedToken = jwt.verify(
+    token as string,
+    process.env.JWT_ACCESS_SECRET as string,
+  ) as UserJwtPayload;
+  if (!decodedToken) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid token.",
+    });
+  }
+
+  const user = await userModel.findOneAndUpdate(
+    { _id: decodedToken._id },
+    {
+      isAccountVerified: true,
+    },
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Account verification successful.",
+  });
+};
+
+export { registrationController, loginController, verifyController };
