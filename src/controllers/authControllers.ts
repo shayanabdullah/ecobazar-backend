@@ -3,7 +3,7 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserJwtPayload } from "../types/types.js";
-import { verifyEmail } from "./../services/emailSender.js";
+import { sendVerificationEmail } from "./../services/emailSender.js";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -71,8 +71,8 @@ const registrationController = async (req: Request, res: Response) => {
     },
   );
 
-  await verifyEmail(user.email, verificationToken);
-
+  await sendVerificationEmail(user.email, user.fullName, verificationToken);
+  
   return res.status(201).json({
     success: true,
     message: "Your account has been created successfully. Welcome to EcoBazar!",
@@ -81,6 +81,6 @@ const registrationController = async (req: Request, res: Response) => {
 
 const loginController = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-}
+};
 
 export { registrationController, loginController };
