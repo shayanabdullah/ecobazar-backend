@@ -32,26 +32,12 @@ const userSchema = new Schema<userModelType>({
     enum: ["active", "inactive"],
     default: "active",
   },
-  verifyOtp:{
-    type: Number,
-    default: 0,
-  },
-  verifyOtpExpire: {
-    type: Number,
-    default: 0,
-  },
+ 
   isAccountVerified:{
     type: Boolean,
     default: false,
   },
-  resetOtp:{
-    type: Number,
-    default: 0,
-  },
-  resetOtpExpire:{
-    type: Number,
-    default: 0,
-  },
+
 })
 
 const userModel = model<userModelType>('user', userSchema);
