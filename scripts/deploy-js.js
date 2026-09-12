@@ -33,9 +33,11 @@ if (fs.existsSync(targetDist)) {
 
 fs.cpSync(sourceDist, targetDist, {
   recursive: true,
+  filter: (src) => !src.endsWith(".js.map"),
 });
 
 console.log("JavaScript files copied.");
+
 console.log("Committing JS branch...");
 
 execSync("git add -A", {
