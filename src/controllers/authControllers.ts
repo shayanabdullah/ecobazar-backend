@@ -228,5 +228,3 @@ export {
   forgotPasswordController,
   resetPasswordController,
 };
-
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2YWE1N2VkNDVmNDM0YmM3NGFiZjc0Y2MiLCJlbWFpbCI6InR1aGluYWZyb3phMDdAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3ODkyMzI4OTksImV4cCI6MTc4OTgzNzY5OX0.YqZSrSsuKN_gt35Q-UNt3cy0MuJ8ODD7zrT3CAdjhHo
