@@ -43,6 +43,7 @@ const registrationController = async (req: Request, res: Response) => {
         "Password must be at least 8 characters and contain an uppercase letter, a lowercase letter, a number, and a special character.",
     });
   }
+
   if (existingUser) {
     return res.status(409).json({
       success: false,
