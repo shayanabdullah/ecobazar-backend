@@ -18,9 +18,12 @@ console.log("Build completed.");
 console.log("Copying compiled JavaScript...");
 
 const sourceDist = path.resolve("dist");
-const targetDist = path.join(jsBranchFolder, "dist");
 
-// Delete old dist
+const targetDist = path.join(
+  jsBranchFolder,
+  "Ecobazar_Backend_JS"
+);
+
 if (fs.existsSync(targetDist)) {
   fs.rmSync(targetDist, {
     recursive: true,
@@ -28,33 +31,56 @@ if (fs.existsSync(targetDist)) {
   });
 }
 
-// Copy fresh dist
 fs.cpSync(sourceDist, targetDist, {
   recursive: true,
 });
 
 console.log("JavaScript files copied.");
-
 console.log("Committing JS branch...");
 
-execSync("git add dist", {
+execSync("git add -A", {
   cwd: jsBranchFolder,
   stdio: "inherit",
 });
 
+const hasChanges = execSync("git status --porcelain", {
+  cwd: jsBranchFolder,
+}).toString().trim();
+
+if (hasChanges) {
+  console.log("Changes detected. Creating commit...");
+
+  execSync(
+    'git commit -m "build: update compiled JavaScript"',
+    {
+      cwd: jsBranchFolder,
+      stdio: "inherit",
+    }
+  );
+
+  console.log("Pushing JS branch...");
+
+  execSync(
+    "git push origin Ecobazar-backend_javascript",
+    {
+      cwd: jsBranchFolder,
+      stdio: "inherit",
+    }
+  );
+
+  console.log("JS branch updated successfully.");
+} else {
+  console.log("No changes detected. JS branch is already up to date.");
+}
+
+console.log("Pushing JS branch...");
+
 execSync(
-  'git commit -m "build: update compiled JavaScript"',
+  "git push origin Ecobazar-backend_javascript",
   {
     cwd: jsBranchFolder,
     stdio: "inherit",
   }
 );
-
-console.log("Pushing JS branch...");
-
-execSync("git push origin Ecobazar-backend_javascript", {
-  cwd: jsBranchFolder,
-  stdio: "inherit",
-});
 
 console.log("Done! JS branch updated.");
