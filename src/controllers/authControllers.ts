@@ -3,7 +3,10 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserJwtPayload } from "../types/types.js";
-import { sendVerificationEmail } from "./../services/emailSender.js";
+import {
+  sendForgotPasswordEmail,
+  sendVerificationEmail,
+} from "../utils/emailSender.js";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -99,15 +102,27 @@ const loginController = async (req: Request, res: Response) => {
       message: "Invalid email or password.",
     });
   }
+  const accessToken = jwt.sign(
+    {
+      _id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_ACCESS_SECRET as string,
+    {
+      expiresIn: "7d",
+    },
+  );
 
   return res.status(200).json({
     success: true,
-    message: "Login successful. Welcome back!",
+    message: "Login successful.",
     data: {
       fullName: user.fullName,
       email: user.email,
       role: user.role,
     },
+    accessToken: accessToken,
   });
 };
 
@@ -117,6 +132,7 @@ const verifyController = async (req: Request, res: Response) => {
     token as string,
     process.env.JWT_ACCESS_SECRET as string,
   ) as UserJwtPayload;
+
   if (!decodedToken) {
     return res.status(400).json({
       success: false,
@@ -137,4 +153,80 @@ const verifyController = async (req: Request, res: Response) => {
   });
 };
 
-export { registrationController, loginController, verifyController };
+const forgotPasswordController = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const existingUser = await userModel.findOne({ email });
+
+  if (!existingUser) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "We couldn't find an account associated with this email address.",
+    });
+  }
+
+  const resetPasswordToken = jwt.sign(
+    {
+      _id: existingUser._id.toString(),
+      email: existingUser.email,
+    },
+    process.env.JWT_ACCESS_SECRET as string,
+    {
+      expiresIn: "10m",
+    },
+  );
+
+  await sendForgotPasswordEmail(
+    email,
+    existingUser.fullName,
+    resetPasswordToken,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message:
+      "We've sent password reset instructions to your email address. Please check your inbox.",
+  });
+};
+
+const resetPasswordController = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const { newPassword, confirmPassword } = req.body;
+
+
+  const decodedToken = jwt.verify(token as string, process.env.JWT_ACCESS_SECRET as string) as UserJwtPayload;
+
+   if(!decodedToken){
+    return res.status(400).json({
+      success: false,
+      message: "Invalid token.",
+    });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "The passwords you entered do not match.",
+    });
+  }
+   const hashedpassword = await bcrypt.hash(newPassword, 10);
+
+await userModel.findOneAndUpdate({ _id: decodedToken._id }, {password: hashedpassword});
+
+
+  return res.status(200).json({
+    success: true,
+    message:
+      "Password reset successful.",
+  });
+};
+export {
+  registrationController,
+  loginController,
+  verifyController,
+  forgotPasswordController,
+  resetPasswordController,
+};
+
+//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2YWE1N2VkNDVmNDM0YmM3NGFiZjc0Y2MiLCJlbWFpbCI6InR1aGluYWZyb3phMDdAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3ODkyMzI4OTksImV4cCI6MTc4OTgzNzY5OX0.YqZSrSsuKN_gt35Q-UNt3cy0MuJ8ODD7zrT3CAdjhHo
