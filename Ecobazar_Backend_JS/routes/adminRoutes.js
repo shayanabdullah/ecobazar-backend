@@ -1,6 +1,7 @@
 import express from 'express';
-import adminController from '../controllers/adminController.js';
+import { deleteUser, getAllUser } from '../controllers/adminController.js';
 const router = express.Router();
-router.post('/delete/products', adminController);
+router.get('/all-users', getAllUser);
+router.post('/delete/user/:id', deleteUser);
 export default router;
 //# sourceMappingURL=adminRoutes.js.map
