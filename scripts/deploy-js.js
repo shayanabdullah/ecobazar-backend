@@ -53,7 +53,7 @@ if (hasChanges) {
   console.log("Changes detected. Creating commit...");
 
   execSync(
-    'git commit -m "build: update compiled JavaScript"',
+    'git commit -m "update compiled JavaScript"',
     {
       cwd: jsBranchFolder,
       stdio: "inherit",
