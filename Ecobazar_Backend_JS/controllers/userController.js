@@ -4,6 +4,13 @@ const updateUserProfile = async (req, res) => {
         const { id } = req.params;
         const { fullName, email, status } = req.body;
         const user = await userModel.findById(id);
+        const sameEmail = await userModel.findOne({ email: email });
+        if (sameEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is already in use.",
+            });
+        }
         if (req.user.role === "user" && req.user._id !== id) {
             return res.status(403).json({
                 success: false,
@@ -61,12 +68,6 @@ const updateUserProfile = async (req, res) => {
     }
     catch (error) {
         console.error("Update user profile error:", error);
-        if (error.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: "Email is already in use.",
-            });
-        }
         return res.status(500).json({
             success: false,
             message: "Unable to update profile at this time.",
