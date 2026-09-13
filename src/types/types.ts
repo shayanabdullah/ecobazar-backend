@@ -5,7 +5,7 @@ export type userModelType = {
     email: string,
     password: string,
     terms: boolean,
-    role: string,
+    role: 'user' | 'admin',
     verifyOtp: number,
     verifyOtpExpire: number,
     isAccountVerified: boolean,
