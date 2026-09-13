@@ -17,5 +17,5 @@ export type userModelType = {
 export interface UserJwtPayload  extends JwtPayload {
     _id: string,
     email: string,
-    role: string,
+    role: 'user' | 'admin',
 }

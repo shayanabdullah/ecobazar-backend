@@ -78,11 +78,7 @@ const registrationController = async (req: Request, res: Response) => {
       },
     );
 
-    await sendVerificationEmail(
-      user.email,
-      user.fullName,
-      verificationToken,
-    );
+    await sendVerificationEmail(user.email, user.fullName, verificationToken);
 
     return res.status(201).json({
       success: true,
@@ -111,10 +107,7 @@ const loginController = async (req: Request, res: Response) => {
       });
     }
 
-    const passwordCompare = await bcrypt.compare(
-      password,
-      user.password,
-    );
+    const passwordCompare = await bcrypt.compare(password, user.password);
 
     if (!passwordCompare) {
       return res.status(401).json({
@@ -131,9 +124,28 @@ const loginController = async (req: Request, res: Response) => {
       },
       process.env.JWT_ACCESS_SECRET as string,
       {
+        expiresIn: "15m",
+      },
+    );
+
+    const refreshToken = jwt.sign(
+      {
+        _id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_REFRESH_SECRET as string,
+      {
         expiresIn: "7d",
       },
     );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ?"none" : "strict",
+       maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
 
     return res.status(200).json({
       success: true,
@@ -259,7 +271,7 @@ const resetPasswordController = async (req: Request, res: Response) => {
 
     const decodedToken = jwt.verify(
       token as string,
-      process.env.JWT_ACCESS_SECRET as string
+      process.env.JWT_ACCESS_SECRET as string,
     ) as UserJwtPayload;
 
     if (newPassword !== confirmPassword) {
@@ -273,7 +285,7 @@ const resetPasswordController = async (req: Request, res: Response) => {
 
     await userModel.findOneAndUpdate(
       { _id: decodedToken._id },
-      { password: hashedpassword }
+      { password: hashedpassword },
     );
 
     return res.status(200).json({
@@ -287,7 +299,6 @@ const resetPasswordController = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export {
   registrationController,

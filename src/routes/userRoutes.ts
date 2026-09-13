@@ -1,7 +1,8 @@
 import express from 'express';
-import userController from '../controllers/userController.js';
+import {updateUserProfile} from '../controllers/userController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
-router.get('/product', userController);
+router.patch('/profile/edit/:id', authMiddleware, updateUserProfile);
 
 export default router;
