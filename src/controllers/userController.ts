@@ -1,13 +1,30 @@
 import { Request, Response } from "express";
 import userModel from "../models/userModel.js";
+import jwt from "jsonwebtoken";
+import { UserJwtPayload } from "../types/types.js";
 
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { fullName, email, status } = req.body;
 
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1];
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication is required to access this resource.",
+      });
+    }
+    const decoded = jwt.verify(
+      token as string,
+      process.env.JWT_ACCESS_SECRET as string,
+    ) as UserJwtPayload;
+
     const user = await userModel.findById(id);
-    const sameEmail = await userModel.findOne({ email : email });
+    const sameEmail = await userModel.findOne({ email: email });
+    
     if (sameEmail) {
       return res.status(400).json({
         success: false,
@@ -15,8 +32,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
       });
     }
 
-
-    if (req.user.role === "user" && req.user._id !== id) {
+    if (decoded.role === "user" && decoded._id !== id) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to update this profile.",
@@ -30,7 +46,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
       });
     }
 
-    if (req.user.role === "user") {
+    if (decoded.role === "user") {
       const updateFields: {
         fullName?: string;
         email?: string;

@@ -74,7 +74,7 @@ const registrationController = async (req: Request, res: Response) => {
       userPayload,
       process.env.JWT_ACCESS_SECRET as string,
       {
-        expiresIn: "7d",
+        expiresIn: "15m",
       },
     );
 
