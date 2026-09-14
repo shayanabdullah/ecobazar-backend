@@ -15,6 +15,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -23,8 +25,9 @@ app.use(helmet());
 app.use("/swagger-assets", express.static(path.join(__dirname, "swagger")));
 
 
+// Custom Swagger Design ----
 
-
+// here is the link of the api doc : https://ecobazar-backend-cflc.onrender.com/api-docs
 app.use(
   "/api-docs",
   swaggerUi.serve,
@@ -708,6 +711,7 @@ html[data-theme="dark"] .swagger-ui .opblock-tag small p {
     customfavIcon: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
   })
 );
+// Custom Swagger Design -----
 
 
 app.use("/api/v1/auth", authRouter);
