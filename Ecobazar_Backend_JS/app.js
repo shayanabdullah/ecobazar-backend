@@ -18,6 +18,8 @@ app.use(cors());
 app.use(cookieParser());
 app.use(helmet());
 app.use("/swagger-assets", express.static(path.join(__dirname, "swagger")));
+// Custom Swagger Design ----
+// here is the link of the api doc : https://ecobazar-backend-cflc.onrender.com/api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customSiteTitle: "EcoBazar API Documentation",
     customJs: "/swagger-assets/swagger-theme.js",
@@ -696,6 +698,7 @@ html[data-theme="dark"] .swagger-ui .opblock-tag small p {
 `,
     customfavIcon: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
 }));
+// Custom Swagger Design -----
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userMiddleware, userRouter);
 app.use("/api/v1/admin", adminMiddleware, adminRouter);
