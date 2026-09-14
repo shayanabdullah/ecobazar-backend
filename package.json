@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "type": "module",
- "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "deploy:js": "node scripts/deploy-js.js"
-},
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "deploy:js": "node scripts/deploy-js.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -24,7 +24,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.6.0",
     "mongoose": "^9.9.5",
-    "nodemailer": "^10.0.1"
+    "nodemailer": "^10.0.1",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -34,6 +36,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.1",
     "@types/nodemailer": "^8.0.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
