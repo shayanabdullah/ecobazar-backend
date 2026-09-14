@@ -51,7 +51,7 @@ const registrationController = async (req, res) => {
             role: user.role,
         };
         const verificationToken = jwt.sign(userPayload, process.env.JWT_ACCESS_SECRET, {
-            expiresIn: "7d",
+            expiresIn: "15m",
         });
         await sendVerificationEmail(user.email, user.fullName, verificationToken);
         return res.status(201).json({

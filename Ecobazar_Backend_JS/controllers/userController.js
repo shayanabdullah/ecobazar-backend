@@ -1,8 +1,18 @@
 import userModel from "../models/userModel.js";
+import jwt from "jsonwebtoken";
 const updateUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
         const { fullName, email, status } = req.body;
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.split(" ")[1];
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication is required to access this resource.",
+            });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
         const user = await userModel.findById(id);
         const sameEmail = await userModel.findOne({ email: email });
         if (sameEmail) {
@@ -11,7 +21,7 @@ const updateUserProfile = async (req, res) => {
                 message: "Email is already in use.",
             });
         }
-        if (req.user.role === "user" && req.user._id !== id) {
+        if (decoded.role === "user" && decoded._id !== id) {
             return res.status(403).json({
                 success: false,
                 message: "You are not authorized to update this profile.",
@@ -23,7 +33,7 @@ const updateUserProfile = async (req, res) => {
                 message: "User not found",
             });
         }
-        if (req.user.role === "user") {
+        if (decoded.role === "user") {
             const updateFields = {};
             if (fullName !== undefined) {
                 updateFields.fullName = fullName;
