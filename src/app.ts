@@ -22,7 +22,10 @@ app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 app.use(helmet());
-app.use("/swagger-assets", express.static(path.join(__dirname, "swagger")));
+app.use(
+  "/swagger-assets",
+  express.static(path.join(process.cwd(), "swagger"))
+);
 
 
 // Custom Swagger Design ----
