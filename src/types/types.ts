@@ -13,6 +13,14 @@ export type userModelType = {
     resetOtpExpire: number,
     status: string,
 }
+export type categoryModelType = {
+categoryName: string,
+  slug: string,
+  image: string,
+  description: string,
+  status: string
+  imagePublicId: string
+}
 
 export interface UserJwtPayload  extends JwtPayload {
     _id: string,

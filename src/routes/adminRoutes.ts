@@ -1,5 +1,9 @@
 import express from 'express';
 import { deleteUser, getAllUser } from '../controllers/adminController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+import { adminMiddleware } from '../middleware/roleMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
+import { categoryController } from '../controllers/categoryController.js';
 const router = express.Router();
 
 /**
@@ -49,5 +53,6 @@ router.get("/all-users", getAllUser);
  */
 router.post("/delete/user/:id", deleteUser);
 
+router.post("/category/create", authMiddleware, upload.single("image"), categoryController );
 
 export default router;

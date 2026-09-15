@@ -1,6 +1,8 @@
 import express from 'express';
 import {updateUserProfile} from '../controllers/userController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
+import { categoryController } from '../controllers/categoryController.js';
 const router = express.Router();
 
 
@@ -46,6 +48,8 @@ const router = express.Router();
  *         description: Email is already in use
  */
 router.patch("/profile/edit/:id", authMiddleware, updateUserProfile);
-
+// temporary
+router.post("/category/create", authMiddleware, upload.single("image"), categoryController);
+// temporary
 
 export default router;

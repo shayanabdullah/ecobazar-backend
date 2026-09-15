@@ -2,31 +2,29 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
+
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import {
   adminMiddleware,
   userMiddleware,
 } from "./middleware/roleMiddleware.js";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 app.use(helmet());
-app.use(
-  "/swagger-assets",
-  express.static(path.join(process.cwd(), "swagger"))
-);
-
+app.use("/swagger-assets", express.static(path.join(process.cwd(), "swagger")));
 
 // Custom Swagger Design ----
 
@@ -36,8 +34,8 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     customSiteTitle: "EcoBazar API Documentation",
-   customJs: "/swagger-assets/swagger-theme.js",
-customCss: `
+    customJs: "/swagger-assets/swagger-theme.js",
+    customCss: `
   /* =========================================================
      ECOBAZAR SWAGGER UI
      LIGHT = DEFAULT
@@ -712,10 +710,9 @@ html[data-theme="dark"] .swagger-ui .opblock-tag small p {
 `,
 
     customfavIcon: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
-  })
+  }),
 );
 // Custom Swagger Design -----
-
 
 app.use("/api/v1/auth", authRouter);
 
