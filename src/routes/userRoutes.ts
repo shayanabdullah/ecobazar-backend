@@ -1,8 +1,7 @@
 import express from 'express';
-import {updateUserProfile} from '../controllers/userController.js';
+import {categoryUserController, updateUserProfile} from '../controllers/userController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
-import { categoryController } from '../controllers/categoryController.js';
 const router = express.Router();
 
 
@@ -49,7 +48,7 @@ const router = express.Router();
  */
 router.patch("/profile/edit/:id", authMiddleware, updateUserProfile);
 // temporary
-router.post("/category/create", authMiddleware, upload.single("image"), categoryController);
+router.post("/category/create", authMiddleware, upload.single("image"), categoryUserController);
 // temporary
 
 export default router;

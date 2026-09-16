@@ -28,7 +28,7 @@ const categorySchema = new Schema<categoryModelType>({
     required: false
   },
   status: {
-     type : String, 
+    type : String, 
     enum : ['active', 'inactive', 'reject'],
     default: 'inactive'
   } 

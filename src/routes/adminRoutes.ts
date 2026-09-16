@@ -1,5 +1,5 @@
 import express from 'express';
-import { deleteUser, getAllUser } from '../controllers/adminController.js';
+import { approveCategory, deleteUser, getAllUser, rejectCategory } from '../controllers/adminController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { adminMiddleware } from '../middleware/roleMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -54,5 +54,9 @@ router.get("/all-users", getAllUser);
 router.post("/delete/user/:id", deleteUser);
 
 router.post("/category/create", authMiddleware, upload.single("image"), categoryController );
+// temporary
+router.patch("/category/approve/:id", approveCategory);
+router.patch("/category/reject/:id", rejectCategory);
+// temporary
 
 export default router;

@@ -64,7 +64,7 @@ const categoryController = async (req: Request, res: Response) => {
       slug: slug.trim().toLowerCase(),
       description:
       description?.trim() || "Explore our products in this category.",
-      status: status ,
+      status: status,
       image: imgUrl,
       imagePublicId: publicId,
     });

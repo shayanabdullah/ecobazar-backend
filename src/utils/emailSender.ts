@@ -452,3 +452,294 @@ export const sendForgotPasswordEmail = async (
   }
 };
 
+// temporary
+export const sendEmailToAdminForCreateCategory = async (
+  email: string,
+  name: string,
+  categoryId: string,
+  categoryName: string,
+) => {
+const approveUrl =
+  `${process.env.BACKEND_URL}/api/v1/admin/category/approve/${categoryId}`;
+
+const rejectUrl =
+  `${process.env.BACKEND_URL}/api/v1/admin/category/reject/${categoryId}`;
+
+  try {
+    const response = await brevo.transactionalEmails.sendTransacEmail({
+      sender: {
+        name: process.env.BREVO_SENDER_NAME!,
+        email: process.env.BREVO_SENDER_EMAIL!,
+      },
+
+      to: [
+        {
+          email,
+          name,
+        },
+      ],
+
+      subject: "EcoBazar - New Category Approval Request",
+
+      htmlContent: `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1.0"
+            />
+            <title>New Category Approval</title>
+          </head>
+
+          <body
+            style="
+              margin:0;
+              padding:40px 20px;
+              background-color:#f4f6f4;
+              font-family:Arial, Helvetica, sans-serif;
+            "
+          >
+            <table
+              role="presentation"
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+            >
+              <tr>
+                <td align="center">
+
+                  <table
+                    role="presentation"
+                    width="480"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                      width:100%;
+                      max-width:480px;
+                      background-color:#ffffff;
+                      border-radius:10px;
+                      overflow:hidden;
+                      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                    "
+                  >
+
+                    <!-- Header -->
+                    <tr>
+                      <td
+                        align="center"
+                        style="
+                          background-color:#2e7d32;
+                          padding:24px 32px;
+                        "
+                      >
+                        <h1
+                          style="
+                            margin:0;
+                            color:#ffffff;
+                            font-size:22px;
+                            font-weight:600;
+                            letter-spacing:0.5px;
+                          "
+                        >
+                          EcoBazar
+                        </h1>
+                      </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding:32px;">
+
+                        <h2
+                          style="
+                            margin:0 0 16px;
+                            color:#222222;
+                            font-size:21px;
+                            font-weight:600;
+                          "
+                        >
+                          New Category Approval
+                        </h2>
+
+                        <p
+                          style="
+                            margin:0 0 16px;
+                            color:#555555;
+                            font-size:15px;
+                            line-height:1.6;
+                          "
+                        >
+                          Hi ${name},
+                        </p>
+
+                        <p
+                          style="
+                            margin:0 0 24px;
+                            color:#555555;
+                            font-size:15px;
+                            line-height:1.6;
+                          "
+                        >
+                          A new category has been submitted to EcoBazar
+                          and is waiting for your approval.
+                        </p>
+
+                        <!-- Category Info -->
+                        <div
+                          style="
+                            padding:18px;
+                            margin-bottom:24px;
+                            background-color:#f8f9f8;
+                            border-left:3px solid #2e7d32;
+                          "
+                        >
+                          <p
+                            style="
+                              margin:0 0 8px;
+                              color:#777777;
+                              font-size:13px;
+                            "
+                          >
+                            CATEGORY
+                          </p>
+
+                          <p
+                            style="
+                              margin:0;
+                              color:#222222;
+                              font-size:18px;
+                              font-weight:600;
+                            "
+                          >
+                            ${categoryName}
+                          </p>
+                        </div>
+
+                        <p
+                          style="
+                            margin:0 0 20px;
+                            color:#555555;
+                            font-size:15px;
+                            line-height:1.6;
+                          "
+                        >
+                          Please review the category and choose an action:
+                        </p>
+
+                        <!-- Buttons -->
+                        <table
+                          role="presentation"
+                          width="100%"
+                          cellpadding="0"
+                          cellspacing="0"
+                          border="0"
+                        >
+                          <tr>
+                            <td align="center" style="padding:8px 0 12px;">
+
+                              <a
+                                href="${approveUrl}"
+                                target="_blank"
+                                style="
+                                  display:inline-block;
+                                  background-color:#2e7d32;
+                                  color:#ffffff;
+                                  text-decoration:none;
+                                  font-size:15px;
+                                  font-weight:600;
+                                  padding:14px 30px;
+                                  border-radius:6px;
+                                  margin-right:8px;
+                                "
+                              >
+                                Approve Category
+                              </a>
+
+                              <a
+                                href="${rejectUrl}"
+                                target="_blank"
+                                style="
+                                  display:inline-block;
+                                  background-color:#d32f2f;
+                                  color:#ffffff;
+                                  text-decoration:none;
+                                  font-size:15px;
+                                  font-weight:600;
+                                  padding:14px 30px;
+                                  border-radius:6px;
+                                "
+                              >
+                                Reject Category
+                              </a>
+
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Notice -->
+                        <p
+                          style="
+                            margin:24px 0 0;
+                            color:#888888;
+                            font-size:13px;
+                            line-height:1.6;
+                          "
+                        >
+                          These links are for category approval only.
+                          Please review the submitted category before
+                          approving or rejecting it.
+                        </p>
+
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td
+                        align="center"
+                        style="
+                          padding:20px 32px;
+                          background-color:#fafafa;
+                          border-top:1px solid #eeeeee;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0;
+                            color:#aaaaaa;
+                            font-size:12px;
+                            line-height:1.5;
+                          "
+                        >
+                          &copy; ${new Date().getFullYear()} EcoBazar.
+                          All rights reserved.
+                        </p>
+                      </td>
+                    </tr>
+
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>`,
+    });
+
+  
+console.log(response);
+
+    return response;
+  } catch (error) {
+    console.error(
+      "Failed to send category approval email:",
+      error,
+    );
+
+    throw error;
+  }
+};
+// temporary
