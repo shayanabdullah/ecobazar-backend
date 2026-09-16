@@ -1,5 +1,8 @@
 import express from 'express';
-import { deleteUser, getAllUser } from '../controllers/adminController.js';
+import { approveCategory, deleteUser, getAllUser, rejectCategory } from '../controllers/adminController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
+import { categoryController } from '../controllers/categoryController.js';
 const router = express.Router();
 /**
  * @swagger
@@ -46,5 +49,10 @@ router.get("/all-users", getAllUser);
  *         description: User not found
  */
 router.post("/delete/user/:id", deleteUser);
+router.post("/category/create", authMiddleware, upload.single("image"), categoryController);
+// temporary
+router.patch("/category/approve/:id", approveCategory);
+router.patch("/category/reject/:id", rejectCategory);
+// temporary
 export default router;
 //# sourceMappingURL=adminRoutes.js.map
