@@ -1,5 +1,6 @@
 import express from 'express';
-import { registrationController, loginController, verifyController, forgotPasswordController, resetPasswordController } from '../controllers/authControllers.js';
+import { registrationController, loginController, sendOtpController, forgotPasswordController, resetPasswordController, verifyOtpController } from '../controllers/authControllers.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 /**
  * @swagger
@@ -79,25 +80,77 @@ router.post("/registration", registrationController);
 router.post("/login", loginController);
 /**
  * @swagger
- * /api/v1/auth/verify/{token}:
+ * /api/v1/auth/send/otp:
  *   post:
- *     summary: Verify user account
+ *     summary: Send account verification OTP
+ *     description: Sends a 6-digit verification code to the authenticated user's email address.
  *     tags:
  *       - Authentication
- *     parameters:
- *       - in: path
- *         name: token
- *         required: true
- *         schema:
- *           type: string
- *         description: Account verification token
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: 68c123456789abcdef123456
+ *                 description: MongoDB ID of the user whose account needs to be verified.
+ *     responses:
+ *       200:
+ *         description: Verification OTP sent successfully
+ *       400:
+ *         description: Account is already verified or required details are missing
+ *       404:
+ *         description: User account not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/send/otp", authMiddleware, sendOtpController);
+/**
+ * @swagger
+ * /api/v1/auth/verify/otp:
+ *   post:
+ *     summary: Verify user account with OTP
+ *     description: Verifies the authenticated user's email address using the OTP sent to their email.
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - otp
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: 68c123456789abcdef123456
+ *                 description: MongoDB ID of the user.
+ *               otp:
+ *                 type: string
+ *                 example: "482731"
+ *                 description: 6-digit verification code sent to the user's email.
  *     responses:
  *       200:
  *         description: Account verified successfully
  *       400:
- *         description: Invalid or expired verification token
+ *         description: Invalid, expired, or missing verification code
+ *       404:
+ *         description: User account not found
+ *       500:
+ *         description: Internal server error
  */
-router.post("/verify/:token", verifyController);
+router.post("/verify/otp", authMiddleware, verifyOtpController);
 /**
  * @swagger
  * /api/v1/auth/forgot-password:
@@ -123,7 +176,7 @@ router.post("/verify/:token", verifyController);
  *       404:
  *         description: User not found
  */
-router.post("/forgot-password", forgotPasswordController);
+router.post("/forgot-password", authMiddleware, forgotPasswordController);
 /**
  * @swagger
  * /api/v1/auth/reset-password/{token}:
@@ -160,6 +213,6 @@ router.post("/forgot-password", forgotPasswordController);
  *       400:
  *         description: Invalid or expired reset token
  */
-router.post("/reset-password/:token", resetPasswordController);
+router.post("/reset-password/:token", authMiddleware, resetPasswordController);
 export default router;
 //# sourceMappingURL=authRoutes.js.map

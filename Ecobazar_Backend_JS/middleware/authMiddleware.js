@@ -1,16 +1,19 @@
 import jwt from "jsonwebtoken";
 const authMiddleware = (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        const { refreshToken } = req.cookies;
+        console.log(refreshToken);
+        if (!refreshToken) {
             return res.status(401).json({
                 success: false,
                 message: "Authentication is required to access this resource.",
             });
         }
-        const token = authHeader.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+        const token = refreshToken;
+        const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
         req.user = decoded;
+        req.body.userId = decoded?._id;
+        console.log(decoded);
         next();
     }
     catch (error) {

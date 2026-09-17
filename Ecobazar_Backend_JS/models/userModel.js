@@ -32,7 +32,13 @@ const userSchema = new Schema({
         type: Boolean,
         default: false,
     },
+    verifyOtp: {
+        type: String,
+    },
+    verifyOtpExpire: {
+        type: Date,
+    },
 });
-const userModel = model('user', userSchema);
+const userModel = model("user", userSchema);
 export default userModel;
 //# sourceMappingURL=userModel.js.map

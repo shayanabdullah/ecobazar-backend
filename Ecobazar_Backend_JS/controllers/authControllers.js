@@ -123,41 +123,102 @@ const loginController = async (req, res) => {
         });
     }
 };
-const verifyController = async (req, res) => {
+const sendOtpController = async (req, res) => {
     try {
-        const { token } = req.params;
-        if (!token) {
-            return res.status(400).json({
+        const { userId } = req?.body;
+        const existingUser = await userModel.findById(userId);
+        if (!existingUser) {
+            return res.status(404).json({
                 success: false,
-                message: "Token is required.",
+                message: "User account not found.",
             });
         }
-        const decodedToken = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-        await userModel.findOneAndUpdate({ _id: decodedToken._id }, {
-            isAccountVerified: true,
-        });
+        if (existingUser.isAccountVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Your account has already been verified.",
+            });
+        }
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        existingUser.verifyOtp = otp;
+        existingUser.verifyOtpExpire = new Date(Date.now() + 10 * 60 * 1000);
+        await existingUser.save();
+        await sendVerificationEmail(existingUser.email, existingUser.fullName, otp);
         return res.status(200).json({
             success: true,
-            message: "Account verification successful.",
+            message: "A verification code has been sent to your email address. Please check your inbox.",
         });
     }
     catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
             return res.status(401).json({
                 success: false,
-                message: "Verification token has expired.",
+                message: "The verification session has expired. Please request a new code.",
             });
         }
         if (error instanceof jwt.JsonWebTokenError) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid verification token.",
+                message: "The verification session is invalid. Please request a new code.",
             });
         }
-        console.error(error);
+        console.error("Send OTP error:", error);
         return res.status(500).json({
             success: false,
-            message: "Something went wrong. Please try again later.",
+            message: "Unable to send the verification code at this time. Please try again later.",
+        });
+    }
+};
+const verifyOtpController = async (req, res) => {
+    try {
+        const { userId, otp } = req.body;
+        if (!userId || !otp) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID and verification code are required.",
+            });
+        }
+        // Find the user
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found.",
+            });
+        }
+        if (user.isAccountVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Your account has already been verified.",
+            });
+        }
+        if (!user.verifyOtp || user.verifyOtp !== String(otp)) {
+            return res.status(400).json({
+                success: false,
+                message: "The verification code is invalid.",
+            });
+        }
+        if (!user.verifyOtpExpire ||
+            user.verifyOtpExpire.getTime() < Date.now()) {
+            return res.status(400).json({
+                success: false,
+                message: "The verification code has expired. Please request a new code.",
+            });
+        }
+        user.isAccountVerified = true;
+        user.verifyOtp = "";
+        user.verifyOtpExpire = new Date(0);
+        await user.save();
+        return res.status(200).json({
+            success: true,
+            message: "Your account has been verified successfully.",
+        });
+    }
+    catch (error) {
+        console.error("Verify OTP error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Unable to verify your account at this time. Please try again later.",
         });
     }
 };
@@ -216,5 +277,5 @@ const resetPasswordController = async (req, res) => {
         });
     }
 };
-export { registrationController, loginController, verifyController, forgotPasswordController, resetPasswordController, };
+export { registrationController, loginController, sendOtpController, verifyOtpController, forgotPasswordController, resetPasswordController, };
 //# sourceMappingURL=authControllers.js.map
