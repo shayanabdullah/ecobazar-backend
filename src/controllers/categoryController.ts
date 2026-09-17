@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 
-const categoryController = async (req: Request, res: Response) => {
+const categoryCreateController = async (req: Request, res: Response) => {
   try {
     const { categoryName, slug, description, status } = req.body;
 
@@ -30,8 +30,6 @@ const categoryController = async (req: Request, res: Response) => {
       });
     }
 
-  
-
     const existingName = await categoryModel.findOne({
       categoryName: categoryName.trim().toLowerCase(),
     });
@@ -44,7 +42,7 @@ const categoryController = async (req: Request, res: Response) => {
     }
 
     const existingSlug = await categoryModel.findOne({
-      slug: slug.trim().toLowerCase() ,
+      slug: slug.trim().toLowerCase(),
     });
 
     if (existingSlug) {
@@ -63,7 +61,7 @@ const categoryController = async (req: Request, res: Response) => {
       categoryName: categoryName.trim().toLowerCase(),
       slug: slug.trim().toLowerCase(),
       description:
-      description?.trim() || "Explore our products in this category.",
+        description?.trim() || "Explore our products in this category.",
       status: status,
       image: imgUrl,
       imagePublicId: publicId,
@@ -84,4 +82,64 @@ const categoryController = async (req: Request, res: Response) => {
   }
 };
 
-export { categoryController };
+const updateCategoryController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const categoryExist = await categoryModel.findById(id);
+
+    if (!categoryExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Category was not found.",
+      });
+    }
+
+    const updatedCategory = await categoryModel.findByIdAndUpdate(
+      id,
+      req.body,
+      { returnDocument: "after" },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `${categoryExist.categoryName} category updated successfully.`,
+      data: updatedCategory,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+
+const deleteCategoryController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const categoryExist = await categoryModel.findById(id);
+
+    if (!categoryExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Category was not found.",
+      });
+    }
+
+    await categoryModel.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: `${categoryExist.categoryName} category deleted successfully.`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+export { categoryCreateController, updateCategoryController, deleteCategoryController };
