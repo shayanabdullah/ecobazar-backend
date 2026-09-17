@@ -8,23 +8,27 @@ const authMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    const authHeader = req.headers.authorization;
+    const {refreshToken} = req.cookies;
+    console.log(refreshToken);
+    
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!refreshToken) {
       return res.status(401).json({
         success: false,
         message: "Authentication is required to access this resource.",
       });
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = refreshToken;
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_ACCESS_SECRET as string,
+      process.env.JWT_REFRESH_SECRET as string,
     ) as UserJwtPayload;
 
     req.user = decoded;
+    req.body.userId = decoded?._id
+console.log(decoded);
 
     next();
   } catch (error) {

@@ -10,10 +10,8 @@ const brevo = new BrevoClient({
 export const sendVerificationEmail = async (
   email: string,
   name: string,
-  token: string,
+  otp: string,
 ) => {
-  const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
-
   try {
     const response =
       await brevo.transactionalEmails.sendTransacEmail({
@@ -34,118 +32,173 @@ export const sendVerificationEmail = async (
         htmlContent: `
           <!DOCTYPE html>
           <html>
-            <body style="margin:0;padding:40px;background:#f4f6f4;font-family:Arial,sans-serif;">
-              
-              <div style="
-                max-width:480px;
-                margin:auto;
-                background:#ffffff;
-                border-radius:8px;
-                overflow:hidden;
-              ">
+            <body
+              style="
+                margin:0;
+                padding:40px 20px;
+                background:#f4f6f4;
+                font-family:Arial, Helvetica, sans-serif;
+              "
+            >
 
-                <div style="
-                  background:#2e7d32;
-                  padding:24px;
-                  text-align:center;
-                ">
-                  <h1 style="
-                    margin:0;
-                    color:white;
-                  ">
+              <div
+                style="
+                  max-width:480px;
+                  margin:auto;
+                  background:#ffffff;
+                  border-radius:8px;
+                  overflow:hidden;
+                  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                "
+              >
+
+                <!-- Header -->
+                <div
+                  style="
+                    background:#2e7d32;
+                    padding:24px;
+                    text-align:center;
+                  "
+                >
+                  <h1
+                    style="
+                      margin:0;
+                      color:#ffffff;
+                      font-size:22px;
+                    "
+                  >
                     EcoBazar
                   </h1>
                 </div>
 
+                <!-- Content -->
                 <div style="padding:32px;">
 
-                  <h2 style="
-                    margin-top:0;
-                    color:#222;
-                  ">
+                  <h2
+                    style="
+                      margin:0 0 16px;
+                      color:#222222;
+                      font-size:21px;
+                    "
+                  >
                     Verify your email
                   </h2>
 
-                  <p style="
-                    color:#555;
-                    line-height:1.6;
-                  ">
+                  <p
+                    style="
+                      color:#555555;
+                      line-height:1.6;
+                      font-size:15px;
+                    "
+                  >
                     Hi ${name},
                   </p>
 
-                  <p style="
-                    color:#555;
-                    line-height:1.6;
-                  ">
+                  <p
+                    style="
+                      color:#555555;
+                      line-height:1.6;
+                      font-size:15px;
+                    "
+                  >
                     Thanks for creating your EcoBazar account.
-                    Please verify your email address to activate your account.
+                    Please use the verification code below to verify
+                    your email address.
                   </p>
 
-                  <div style="text-align:center;margin:30px 0;">
+                  <!-- OTP -->
+                  <div
+                    style="
+                      text-align:center;
+                      margin:30px 0;
+                    "
+                  >
 
-                    <a
-                      href="${verifyUrl}"
-                      target="_blank"
+                    <p
                       style="
-                        display:inline-block;
-                        background:#2e7d32;
-                        color:#ffffff;
-                        text-decoration:none;
-                        padding:14px 32px;
-                        border-radius:6px;
-                        font-weight:bold;
+                        margin:0 0 10px;
+                        color:#888888;
+                        font-size:13px;
+                        text-transform:uppercase;
+                        letter-spacing:1px;
                       "
                     >
-                      Verify Email
-                    </a>
+                      Verification Code
+                    </p>
+
+                    <div
+                      style="
+                        display:inline-block;
+                        background:#f1f8f1;
+                        border:1px solid #d5ead6;
+                        border-radius:8px;
+                        padding:16px 28px;
+                      "
+                    >
+                      <span
+                        style="
+                          color:#2e7d32;
+                          font-size:30px;
+                          font-weight:bold;
+                          letter-spacing:8px;
+                        "
+                      >
+                        ${otp}
+                      </span>
+                    </div>
 
                   </div>
 
-                  <p style="
-                    color:#888;
-                    font-size:13px;
-                    line-height:1.6;
-                  ">
-                    This verification link will expire in 10 minutes.
+                  <p
+                    style="
+                      color:#888888;
+                      font-size:13px;
+                      line-height:1.6;
+                    "
+                  >
+                    This verification code will expire in
+                    <strong>10 minutes</strong>.
                   </p>
 
-                  <p style="
-                    color:#888;
-                    font-size:13px;
-                    line-height:1.6;
-                    word-break:break-all;
-                  ">
-                    If the button doesn't work, copy this link:
-                    <br />
-                    <a
-                      href="${verifyUrl}"
-                      style="color:#2e7d32;"
+                  <div
+                    style="
+                      margin-top:24px;
+                      padding:14px 16px;
+                      background:#f8f9f8;
+                      border-left:3px solid #2e7d32;
+                    "
+                  >
+                    <p
+                      style="
+                        margin:0;
+                        color:#777777;
+                        font-size:13px;
+                        line-height:1.6;
+                      "
                     >
-                      ${verifyUrl}
-                    </a>
-                  </p>
-
-                  <p style="
-                    color:#888;
-                    font-size:13px;
-                  ">
-                    If you didn't create an EcoBazar account,
-                    you can safely ignore this email.
-                  </p>
+                      If you didn't create an EcoBazar account,
+                      you can safely ignore this email.
+                    </p>
+                  </div>
 
                 </div>
 
-                <div style="
-                  padding:20px;
-                  background:#fafafa;
-                  text-align:center;
-                  border-top:1px solid #eee;
-                ">
-                  <p style="
-                    margin:0;
-                    color:#aaa;
-                    font-size:12px;
-                  ">
+                <!-- Footer -->
+                <div
+                  style="
+                    padding:20px;
+                    background:#fafafa;
+                    text-align:center;
+                    border-top:1px solid #eeeeee;
+                  "
+                >
+                  <p
+                    style="
+                      margin:0;
+                      color:#aaaaaa;
+                      font-size:12px;
+                    "
+                  >
                     © ${new Date().getFullYear()} EcoBazar.
                     All rights reserved.
                   </p>
@@ -158,11 +211,18 @@ export const sendVerificationEmail = async (
         `,
       });
 
-    console.log("Verification email sent:", response.messageId);
+    console.log(
+      "Verification OTP email sent:",
+      response.messageId,
+    );
 
     return response;
   } catch (error) {
-    console.error("Failed to send verification email:", error);
+    console.error(
+      "Failed to send verification OTP email:",
+      error,
+    );
+
     throw error;
   }
 };

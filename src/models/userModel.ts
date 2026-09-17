@@ -1,44 +1,48 @@
-import mongoose from "mongoose"
-import { userModelType } from "../types/types.js"
+import mongoose from "mongoose";
+import { userModelType } from "../types/types.js";
 
-
-const { Schema, model } = mongoose
+const { Schema, model } = mongoose;
 
 const userSchema = new Schema<userModelType>({
-  fullName:{
+  fullName: {
     type: String,
     required: true,
   },
-  email:{
+  email: {
     type: String,
     required: true,
     unique: true,
   },
-  password:{
+  password: {
     type: String,
     required: true,
   },
-  terms:{
+  terms: {
     type: Boolean,
     required: true,
   },
-  role:{
+  role: {
     type: String,
     enum: ["user", "admin"],
     default: "user",
   },
-  status:{
+  status: {
     type: String,
     enum: ["active", "inactive"],
     default: "active",
   },
- 
-  isAccountVerified:{
+
+  isAccountVerified: {
     type: Boolean,
     default: false,
   },
+  verifyOtp: {
+    type: String,
+  },
+  verifyOtpExpire: {
+    type: Date,
+  },
+});
 
-})
-
-const userModel = model<userModelType>('user', userSchema);
+const userModel = model<userModelType>("user", userSchema);
 export default userModel;
