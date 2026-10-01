@@ -1,8 +1,8 @@
 import express from "express";
-import { approveCategory, deleteUser, getAllUser, rejectCategory, } from "../controllers/adminController.js";
+import { deleteUser, getAllUser } from "../controllers/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { categoryCreateController, deleteCategoryController, updateCategoryController, } from "../controllers/categoryController.js";
+import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, } from "../controllers/categoryController.js";
 const router = express.Router();
 /**
  * @swagger
@@ -179,9 +179,6 @@ router.patch("/category/edit/:id", authMiddleware, upload.single("image"), updat
  *         description: Internal server error
  */
 router.post("/category/delete/:id", authMiddleware, deleteCategoryController);
-// temporary
-router.patch("/category/approve/:id", approveCategory);
-router.patch("/category/reject/:id", rejectCategory);
-// temporary
+router.get("/categories", authMiddleware, getCategory);
 export default router;
 //# sourceMappingURL=adminRoutes.js.map

@@ -1,5 +1,5 @@
 import express from 'express';
-import { registrationController, loginController, sendOtpController, forgotPasswordController, resetPasswordController, verifyOtpController } from '../controllers/authControllers.js';
+import { registrationController, loginController, sendOtpController, forgotPasswordController, resetPasswordController, verifyOtpController, refreshAccessTokenController } from '../controllers/authControllers.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 /**
@@ -214,5 +214,6 @@ router.post("/forgot-password", authMiddleware, forgotPasswordController);
  *         description: Invalid or expired reset token
  */
 router.post("/reset-password/:token", authMiddleware, resetPasswordController);
+router.post("/refresh-token", refreshAccessTokenController);
 export default router;
 //# sourceMappingURL=authRoutes.js.map

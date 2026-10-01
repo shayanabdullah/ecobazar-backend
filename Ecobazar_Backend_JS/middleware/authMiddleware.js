@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 const authMiddleware = (req, res, next) => {
     try {
         const { refreshToken } = req.cookies;
-        console.log(refreshToken);
         if (!refreshToken) {
             return res.status(401).json({
                 success: false,
@@ -11,12 +10,15 @@ const authMiddleware = (req, res, next) => {
         }
         const token = refreshToken;
         const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-        req.user = decoded;
-        req.body.userId = decoded?._id;
-        console.log(decoded);
+        req.user = {
+            userId: decoded.userId,
+            email: decoded.email,
+            role: decoded.role,
+        };
         next();
     }
     catch (error) {
+        console.log(error);
         if (error instanceof jwt.TokenExpiredError) {
             return res.status(401).json({
                 success: false,
@@ -32,6 +34,7 @@ const authMiddleware = (req, res, next) => {
         return res.status(500).json({
             success: false,
             message: "Authentication failed. Please try again later.",
+            error: error.message,
         });
     }
 };

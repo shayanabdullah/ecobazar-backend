@@ -66,6 +66,7 @@ const categoryCreateController = async (req, res) => {
 const updateCategoryController = async (req, res) => {
     try {
         const { id } = req.params;
+        const { categoryName, slug, description, status } = req.body;
         const categoryExist = await categoryModel.findById(id);
         if (!categoryExist) {
             return res.status(404).json({
@@ -73,7 +74,45 @@ const updateCategoryController = async (req, res) => {
                 message: "Category was not found.",
             });
         }
-        const updatedCategory = await categoryModel.findByIdAndUpdate(id, req.body, { returnDocument: "after" });
+        if (categoryName) {
+            const existName = await categoryModel.findOne({
+                categoryName: categoryName.trim().toLowerCase(),
+                _id: { $ne: id }
+            });
+            if (existName) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Category already exists.",
+                });
+            }
+        }
+        if (slug) {
+            const existSlug = await categoryModel.findOne({
+                slug: slug.trim().toLowerCase(),
+                _id: { $ne: id }
+            });
+            if (existSlug) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Slug already exists.",
+                });
+            }
+        }
+        let img = categoryExist.image;
+        let publicIdImg = categoryExist.imagePublicId;
+        if (req.file) {
+            const { imgUrl, publicId } = await uploadToCloudinary(req.file.path, "ecobazar/categories");
+            img = imgUrl;
+            publicIdImg = publicId;
+        }
+        const updatedCategory = await categoryModel.findByIdAndUpdate(id, {
+            categoryName: categoryName ? categoryName.trim().toLowerCase() : categoryExist.categoryName,
+            slug: slug ? slug.trim().toLowerCase() : categoryExist.slug,
+            description: description ? description.trim() : categoryExist.description,
+            image: img,
+            imagePublicId: publicIdImg,
+            status: status,
+        }, { returnDocument: "after", runValidators: true });
         return res.status(200).json({
             success: true,
             message: `${categoryExist.categoryName} category updated successfully.`,
@@ -84,6 +123,7 @@ const updateCategoryController = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Internal server error.",
+            error: error.message,
         });
     }
 };
@@ -110,5 +150,28 @@ const deleteCategoryController = async (req, res) => {
         });
     }
 };
-export { categoryCreateController, updateCategoryController, deleteCategoryController };
+const getCategory = async (req, res) => {
+    try {
+        const category = await categoryModel.find();
+        if (category.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No category found.",
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Category retrieved successfully.",
+            data: category,
+        });
+    }
+    catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            error: err.message,
+        });
+    }
+};
+export { categoryCreateController, updateCategoryController, deleteCategoryController, getCategory };
 //# sourceMappingURL=categoryController.js.map

@@ -45,15 +45,6 @@ const registrationController = async (req, res) => {
             password: hashedpassword,
             terms,
         }).save();
-        const userPayload = {
-            _id: user._id.toString(),
-            email: user.email,
-            role: user.role,
-        };
-        const verificationToken = jwt.sign(userPayload, process.env.JWT_ACCESS_SECRET, {
-            expiresIn: "15m",
-        });
-        await sendVerificationEmail(user.email, user.fullName, verificationToken);
         return res.status(201).json({
             success: true,
             message: "Your account has been created successfully. Welcome to EcoBazar!",
@@ -84,18 +75,15 @@ const loginController = async (req, res) => {
                 message: "Invalid email or password.",
             });
         }
-        const accessToken = jwt.sign({
-            _id: user._id.toString(),
+        const userPayload = {
+            userId: user._id.toString(),
             email: user.email,
             role: user.role,
-        }, process.env.JWT_ACCESS_SECRET, {
+        };
+        const accessToken = jwt.sign(userPayload, process.env.JWT_ACCESS_SECRET, {
             expiresIn: "15m",
         });
-        const refreshToken = jwt.sign({
-            _id: user._id.toString(),
-            email: user.email,
-            role: user.role,
-        }, process.env.JWT_REFRESH_SECRET, {
+        const refreshToken = jwt.sign(userPayload, process.env.JWT_REFRESH_SECRET, {
             expiresIn: "7d",
         });
         res.cookie('refreshToken', refreshToken, {
@@ -125,7 +113,8 @@ const loginController = async (req, res) => {
 };
 const sendOtpController = async (req, res) => {
     try {
-        const { userId } = req?.body;
+        const { userId } = req?.user;
+        console.log(userId);
         const existingUser = await userModel.findById(userId);
         if (!existingUser) {
             return res.status(404).json({
@@ -171,7 +160,8 @@ const sendOtpController = async (req, res) => {
 };
 const verifyOtpController = async (req, res) => {
     try {
-        const { userId, otp } = req.body;
+        const { userId } = req.user;
+        const { otp } = req.body;
         if (!userId || !otp) {
             return res.status(400).json({
                 success: false,
@@ -277,5 +267,48 @@ const resetPasswordController = async (req, res) => {
         });
     }
 };
-export { registrationController, loginController, sendOtpController, verifyOtpController, forgotPasswordController, resetPasswordController, };
+const refreshAccessTokenController = async (req, res) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token is required.",
+            });
+        }
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        const accessToken = jwt.sign({
+            userId: decoded.userId,
+            email: decoded.email,
+            role: decoded.role,
+        }, process.env.JWT_ACCESS_SECRET, {
+            expiresIn: "15m",
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Access token refreshed successfully.",
+            accessToken,
+        });
+    }
+    catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token has expired. Please log in again.",
+            });
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh token.",
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            message: "Unable to refresh access token.",
+            error: error.message,
+        });
+    }
+};
+export { registrationController, loginController, sendOtpController, verifyOtpController, forgotPasswordController, resetPasswordController, refreshAccessTokenController };
 //# sourceMappingURL=authControllers.js.map
