@@ -5,7 +5,7 @@ export type userModelType = {
     email: string,
     password: string,
     terms: boolean,
-    role: 'user' | 'admin',
+    role: 'user' | 'admin' | 'vendor',
     verifyOtp: string,
     verifyOtpExpire: Date,
     isAccountVerified: boolean,
@@ -23,7 +23,7 @@ categoryName: string,
 }
 
 export interface UserJwtPayload  extends JwtPayload {
-    _id: string,
+    userId: string,
     email: string,
-    role: 'user' | 'admin',
+    role: 'user' | 'admin' | 'vendor',
 }

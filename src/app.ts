@@ -6,12 +6,14 @@ import helmet from "helmet";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
+import vendorRouter from "./routes/vendor.routes.js";
 
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import {
   adminMiddleware,
   userMiddleware,
+  vendorMiddleware,
 } from "./middleware/roleMiddleware.js";
 
 import path from "node:path";
@@ -719,6 +721,8 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userMiddleware, userRouter);
 
 app.use("/api/v1/admin", adminMiddleware, adminRouter);
+
+app.use("/api/v1/vendor", vendorMiddleware, vendorRouter);
 
 app.get("/", (_req, res) => {
   res.json({

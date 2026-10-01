@@ -9,8 +9,6 @@ const authMiddleware = (
 ) => {
   try {
     const {refreshToken} = req.cookies;
-    console.log(refreshToken);
-    
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -26,12 +24,15 @@ const authMiddleware = (
       process.env.JWT_REFRESH_SECRET as string,
     ) as UserJwtPayload;
 
-    req.user = decoded;
-    req.body.userId = decoded?._id
-console.log(decoded);
+   req.user = {
+  userId: decoded.userId,
+  email: decoded.email,
+  role: decoded.role,
+};
 
     next();
-  } catch (error) {
+  } catch (error: any) {
+    console.log(error);
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(401).json({
         success: false,
@@ -49,8 +50,11 @@ console.log(decoded);
     return res.status(500).json({
       success: false,
       message: "Authentication failed. Please try again later.",
+      error: error.message,
     });
   }
 };
+
+
 
 export { authMiddleware };

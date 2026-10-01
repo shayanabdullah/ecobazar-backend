@@ -14,6 +14,7 @@ const uploadToCloudinary = async (filePath: string, folder: string) => {
   })
 
 
+
   return {
       publicId: uploadResult.public_id,
     imgUrl,

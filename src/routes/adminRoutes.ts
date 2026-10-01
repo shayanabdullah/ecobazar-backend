@@ -1,15 +1,11 @@
 import express from "express";
-import {
-  approveCategory,
-  deleteUser,
-  getAllUser,
-  rejectCategory,
-} from "../controllers/adminController.js";
+import { deleteUser, getAllUser } from "../controllers/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import {
   categoryCreateController,
   deleteCategoryController,
+  getCategory,
   updateCategoryController,
 } from "../controllers/categoryController.js";
 const router = express.Router();
@@ -204,9 +200,6 @@ router.patch(
  */
 router.post("/category/delete/:id", authMiddleware, deleteCategoryController);
 
-// temporary
-router.patch("/category/approve/:id", approveCategory);
-router.patch("/category/reject/:id", rejectCategory);
-// temporary
+router.get("/categories", authMiddleware, getCategory);
 
 export default router;

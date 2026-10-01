@@ -64,21 +64,6 @@ const registrationController = async (req: Request, res: Response) => {
       terms,
     }).save();
 
-    const userPayload: UserJwtPayload = {
-      _id: user._id.toString(),
-      email: user.email,
-      role: user.role,
-    };
-
-    const verificationToken = jwt.sign(
-      userPayload,
-      process.env.JWT_ACCESS_SECRET as string,
-      {
-        expiresIn: "15m",
-      },
-    );
-
-    await sendVerificationEmail(user.email, user.fullName, verificationToken);
 
     return res.status(201).json({
       success: true,
@@ -115,25 +100,21 @@ const loginController = async (req: Request, res: Response) => {
         message: "Invalid email or password.",
       });
     }
+    const userPayload: UserJwtPayload = {
+       userId: user._id.toString(),
+       email: user.email,
+       role: user.role,
+     };
 
     const accessToken = jwt.sign(
-      {
-        _id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
+     userPayload,
       process.env.JWT_ACCESS_SECRET as string,
       {
         expiresIn: "15m",
       },
     );
-
     const refreshToken = jwt.sign(
-      {
-        _id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
+      userPayload,
       process.env.JWT_REFRESH_SECRET as string,
       {
         expiresIn: "7d",
@@ -170,7 +151,8 @@ const loginController = async (req: Request, res: Response) => {
 
 const sendOtpController = async (req: Request, res: Response) => {
   try {
-    const { userId } = req?.body;
+    const { userId } = req?.user;
+    console.log(userId);
 
     const existingUser = await userModel.findById(userId);
 
@@ -236,7 +218,8 @@ const sendOtpController = async (req: Request, res: Response) => {
 
 const verifyOtpController = async (req: Request, res: Response) => {
   try {
-    const { userId, otp } = req.body;
+    const { userId } = req.user;
+    const { otp } = req.body;
 
   
     if (!userId || !otp) {
@@ -383,6 +366,63 @@ const resetPasswordController = async (req: Request, res: Response) => {
   }
 };
 
+const refreshAccessTokenController  = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is required.",
+      });
+    }
+
+    const decoded =  jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET as string,
+    ) as UserJwtPayload;
+
+const accessToken = jwt.sign(
+  {
+     userId: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+  },
+  process.env.JWT_ACCESS_SECRET as string,
+  {
+    expiresIn: "15m",
+  },
+)
+
+  return res.status(200).json({
+      success: true,
+      message: "Access token refreshed successfully.",
+      accessToken,
+    });
+
+  } catch (error: any) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token has expired. Please log in again.",
+      });
+    }
+    
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to refresh access token.",
+      error: error.message,
+    });
+  }
+}
+
 export {
   registrationController,
   loginController,
@@ -390,4 +430,5 @@ export {
   verifyOtpController,
   forgotPasswordController,
   resetPasswordController,
+  refreshAccessTokenController
 };
