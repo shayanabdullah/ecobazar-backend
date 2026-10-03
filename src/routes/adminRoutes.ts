@@ -7,6 +7,8 @@ import {
   deleteCategoryController,
   getCategory,
   updateCategoryController,
+  createSubCategory,
+  getSubCategory
 } from "../controllers/categoryController.js";
 const router = express.Router();
 
@@ -199,7 +201,11 @@ router.patch(
  *         description: Internal server error
  */
 router.post("/category/delete/:id", authMiddleware, deleteCategoryController);
-
+// Get all categories
 router.get("/categories", authMiddleware, getCategory);
+// Create subcategory
+router.post("/create/subcategory", upload.single("image"), authMiddleware, createSubCategory);
+// Get all subcategories
+router.get("/subcategories", authMiddleware, getSubCategory);
 
 export default router;
