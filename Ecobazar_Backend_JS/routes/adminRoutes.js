@@ -2,7 +2,7 @@ import express from "express";
 import { deleteUser, getAllUser } from "../controllers/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, } from "../controllers/categoryController.js";
+import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, createSubCategory, getSubCategory } from "../controllers/categoryController.js";
 const router = express.Router();
 /**
  * @swagger
@@ -179,6 +179,11 @@ router.patch("/category/edit/:id", authMiddleware, upload.single("image"), updat
  *         description: Internal server error
  */
 router.post("/category/delete/:id", authMiddleware, deleteCategoryController);
+// Get all categories
 router.get("/categories", authMiddleware, getCategory);
+// Create subcategory
+router.post("/create/subcategory", upload.single("image"), authMiddleware, createSubCategory);
+// Get all subcategories
+router.get("/subcategories", authMiddleware, getSubCategory);
 export default router;
 //# sourceMappingURL=adminRoutes.js.map

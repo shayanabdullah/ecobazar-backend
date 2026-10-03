@@ -1,5 +1,6 @@
 import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
+import subCategoryModel from "../models/subcategory.model.js";
 const categoryCreateController = async (req, res) => {
     try {
         const { categoryName, slug, description, status } = req.body;
@@ -77,7 +78,7 @@ const updateCategoryController = async (req, res) => {
         if (categoryName) {
             const existName = await categoryModel.findOne({
                 categoryName: categoryName.trim().toLowerCase(),
-                _id: { $ne: id }
+                _id: { $ne: id },
             });
             if (existName) {
                 return res.status(409).json({
@@ -89,7 +90,7 @@ const updateCategoryController = async (req, res) => {
         if (slug) {
             const existSlug = await categoryModel.findOne({
                 slug: slug.trim().toLowerCase(),
-                _id: { $ne: id }
+                _id: { $ne: id },
             });
             if (existSlug) {
                 return res.status(409).json({
@@ -106,9 +107,13 @@ const updateCategoryController = async (req, res) => {
             publicIdImg = publicId;
         }
         const updatedCategory = await categoryModel.findByIdAndUpdate(id, {
-            categoryName: categoryName ? categoryName.trim().toLowerCase() : categoryExist.categoryName,
+            categoryName: categoryName
+                ? categoryName.trim().toLowerCase()
+                : categoryExist.categoryName,
             slug: slug ? slug.trim().toLowerCase() : categoryExist.slug,
-            description: description ? description.trim() : categoryExist.description,
+            description: description
+                ? description.trim()
+                : categoryExist.description,
             image: img,
             imagePublicId: publicIdImg,
             status: status,
@@ -173,5 +178,111 @@ const getCategory = async (req, res) => {
         });
     }
 };
-export { categoryCreateController, updateCategoryController, deleteCategoryController, getCategory };
+const createSubCategory = async (req, res) => {
+    try {
+        const { subCategoryName, slug, category } = req.body;
+        const { userId } = req.user;
+        const img = req.file;
+        if (!subCategoryName || !slug || !category) {
+            return res.status(400).json({
+                success: false,
+                message: "Please Fill the all fields.",
+            });
+        }
+        if (!img) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload the image.",
+            });
+        }
+        const existCategory = await categoryModel.findById(category);
+        if (!existCategory) {
+            return res.status(404).json({
+                success: false,
+                message: "Category was not found.",
+            });
+        }
+        if (existCategory.status !== "active") {
+            return res.status(404).json({
+                success: false,
+                message: "Category is not active.",
+            });
+        }
+        const subCategoryExist = await subCategoryModel.findOne({
+            $or: [
+                {
+                    subCategoryName: subCategoryName.trim().toLowerCase(),
+                },
+                {
+                    slug: slug.trim().toLowerCase(),
+                },
+            ],
+        });
+        if (subCategoryExist) {
+            return res.status(409).json({
+                success: false,
+                message: "Subcategory already exists.",
+            });
+        }
+        const existSlug = await subCategoryModel.findOne({
+            slug: slug.trim().toLowerCase(),
+        });
+        if (existSlug) {
+            return res.status(409).json({
+                success: false,
+                message: "Slug already exists.",
+            });
+        }
+        const { imgUrl, publicId } = await uploadToCloudinary(img.path, "ecobazar/subCategories");
+        const createSubCategory = await subCategoryModel.create({
+            subCategoryName: subCategoryName.trim().toLowerCase(),
+            slug: slug.trim().toLowerCase(),
+            category: category,
+            image: imgUrl,
+            imagePublicId: publicId,
+            createdBy: userId,
+        });
+        return res.status(201).json({
+            success: true,
+            message: "Subcategory created successfully.",
+            data: createSubCategory,
+        });
+    }
+    catch (error) {
+        console.error("Create subcategory error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            error: error.message,
+        });
+    }
+};
+const getSubCategory = async (req, res) => {
+    try {
+        const subcategories = await subCategoryModel
+            .find()
+            .populate("category", "categoryName slug")
+            .populate("createdBy", "fullName email role");
+        if (subcategories.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No subcategory found.",
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Subcategory retrieved successfully.",
+            data: subcategories,
+        });
+    }
+    catch (error) {
+        console.error("Create subcategory error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            error: error.message,
+        });
+    }
+};
+export { categoryCreateController, updateCategoryController, deleteCategoryController, getCategory, createSubCategory, getSubCategory, };
 //# sourceMappingURL=categoryController.js.map
