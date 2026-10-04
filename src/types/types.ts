@@ -20,7 +20,8 @@ categoryName: string,
   image: string,
   description: string,
   status: string
-  imagePublicId: string
+  imagePublicId: string,
+  createdBy: Types.ObjectId;
 }
 export type subCategoryModelType = {
   subCategoryName: string;

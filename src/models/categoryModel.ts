@@ -31,7 +31,11 @@ const categorySchema = new Schema<categoryModelType>({
     type : String, 
     enum : ['active', 'inactive', 'reject'],
     default: 'inactive'
-  } 
+  } ,
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "user",
+  }
 })
 
 const categoryModel = model<categoryModelType>('category', categorySchema);

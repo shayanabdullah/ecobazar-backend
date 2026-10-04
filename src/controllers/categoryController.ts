@@ -3,11 +3,13 @@ import { Request, Response } from "express";
 import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 import subCategoryModel from "../models/subcategory.model.js";
+import userModel from "../models/userModel.js";
+import mongoose from "mongoose";
+import { sendAdminSubCategoryCreatedEmail, sendSubCategoryApprovalEmail } from "../utils/emailSender.js";
 
 const categoryCreateController = async (req: Request, res: Response) => {
   try {
     const { categoryName, slug, description, status } = req.body;
-
     const img = req.file;
 
     if (!categoryName) {
@@ -215,7 +217,9 @@ const getCategory = async (req: Request, res: Response) => {
 const createSubCategory = async (req: Request, res: Response) => {
   try {
     const { subCategoryName, slug, category } = req.body;
-    const { userId } = req.user;
+    const { userId, role, fullName } = req.user;
+    const status = role === "admin" ? "active" : "inactive";
+
     const img = req.file;
 
     if (!subCategoryName || !slug || !category) {
@@ -284,7 +288,22 @@ const createSubCategory = async (req: Request, res: Response) => {
       image: imgUrl,
       imagePublicId: publicId,
       createdBy: userId,
+      status: status,
     });
+    if (role === "vendor") {
+     await sendSubCategoryApprovalEmail(
+      fullName,
+      subCategoryName,
+      existCategory.categoryName,
+     )
+    }
+
+    if (role === "admin") {
+     await sendAdminSubCategoryCreatedEmail(
+      subCategoryName,
+      existCategory.categoryName,
+     )
+    }
 
     return res.status(201).json({
       success: true,
@@ -320,12 +339,205 @@ const getSubCategory = async (req: Request, res: Response) => {
       data: subcategories,
     });
   } catch (error: any) {
-    console.error("Create subcategory error:", error);
+    console.error("get subcategory error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
       error: error.message,
+    });
+  }
+};
+
+const getSubCategoryByCategory = async (req: Request, res: Response) => {
+  try {
+    const { categoryId } = req.params;
+    const existCategory = await categoryModel.findById(categoryId);
+    if (!existCategory) {
+      return res.status(404).json({
+        success: false,
+        message: "Category was not found.",
+      });
+    }
+    const subCategories = await subCategoryModel
+      .find({ category: categoryId })
+      .populate("createdBy", "fullName role");
+    if (subCategories.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No subcategory found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Subcategory retrieved successfully.",
+      data: subCategories,
+    });
+  } catch (error: any) {
+    console.error("get subcategory error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+const getSubCategoryByCreatedBy = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id as string)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id.",
+      });
+    }
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User was not found.",
+      });
+    }
+    const subCategories = await subCategoryModel
+      .find({ createdBy: id })
+      .populate("createdBy", "fullName role");
+    if (subCategories.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No subcategory found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "SubCategorys retrieved successfully.",
+      data: subCategories,
+    });
+  } catch (error: any) {
+    console.error("get subcategory error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+const updateSubCategoryController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.user;
+    if (!mongoose.Types.ObjectId.isValid(id as string)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subcategory id.",
+      });
+    }
+    const { subCategoryName, slug } = req.body;
+    const subCategoryExist = await subCategoryModel.findById(id);
+
+    if (!subCategoryExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Subcategory was not found.",
+      });
+    }
+    if (subCategoryName || subCategoryName !== undefined) {
+      const existName = await subCategoryModel.findOne({
+        subCategoryName: subCategoryName.trim().toLowerCase(),
+        _id: { $ne: id },
+      });
+      if (existName) {
+        return res.status(409).json({
+          success: false,
+          message: "Subcategory already exists.",
+        });
+      }
+    }
+    if (slug || slug !== undefined) {
+      const existSlug = await subCategoryModel.findOne({
+        slug: slug.trim().toLowerCase(),
+        _id: { $ne: id },
+      });
+      if (existSlug) {
+        return res.status(409).json({
+          success: false,
+          message: "Slug already exists.",
+        });
+      }
+    }
+
+    let img = subCategoryExist.image;
+    let publicIdImg = subCategoryExist.imagePublicId;
+
+    if (req.file) {
+      const { imgUrl, publicId } = await uploadToCloudinary(
+        req.file.path,
+        "ecobazar/categories",
+      );
+      img = imgUrl;
+      publicIdImg = publicId;
+    }
+
+    const updatedSubCategory = await subCategoryModel.findByIdAndUpdate(
+      id,
+      {
+        subCategoryName: subCategoryName
+          ? subCategoryName.trim().toLowerCase()
+          : subCategoryExist.subCategoryName,
+        slug: slug ? slug.trim().toLowerCase() : subCategoryExist.slug,
+        image: img,
+        imagePublicId: publicIdImg,
+        createdBy: userId,
+      },
+      { returnDocument: "after", runValidators: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `${subCategoryExist.subCategoryName} subcategory updated successfully.`,
+      data: updatedSubCategory,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+};
+
+const deleteSubCategoryController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id as string)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subcategory id.",
+      });
+    }
+
+    const subcategoryExist = await subCategoryModel.findById(id);
+
+    if (!subcategoryExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Subcategory was not found.",
+      });
+    }
+
+    await subCategoryModel.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: `${subcategoryExist.subCategoryName} subcategory deleted successfully.`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
     });
   }
 };
@@ -337,4 +549,8 @@ export {
   getCategory,
   createSubCategory,
   getSubCategory,
+  getSubCategoryByCategory,
+  getSubCategoryByCreatedBy,
+  updateSubCategoryController,
+  deleteSubCategoryController,
 };

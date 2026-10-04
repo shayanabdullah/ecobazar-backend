@@ -28,6 +28,7 @@ const authMiddleware = (
   userId: decoded.userId,
   email: decoded.email,
   role: decoded.role,
+  fullName: decoded.fullName,
 };
 
     next();
