@@ -1,7 +1,7 @@
-import express from 'express';
-import { authMiddleware } from '../middleware/authMiddleware.js';
-import upload from '../middleware/uploadMiddleware.js';
-import { categoryCreateController, deleteCategoryController, updateCategoryController } from '../controllers/categoryController.js';
+import express from "express";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
+import { categoryCreateController, createSubCategory, deleteCategoryController, updateCategoryController, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, } from "../controllers/categoryController.js";
 const router = express.Router();
 router.post("/category/create", authMiddleware, upload.single("image"), categoryCreateController);
 /**
@@ -90,5 +90,17 @@ router.patch("/category/edit/:id", authMiddleware, upload.single("image"), updat
  *         description: Internal server error
  */
 router.post("/category/delete/:id", authMiddleware, deleteCategoryController);
+// Create subcategory
+router.post("/create/subcategory", upload.single("image"), authMiddleware, createSubCategory);
+// Get all subcategories
+router.get("/subcategories", authMiddleware, getSubCategory);
+// Get subcategories by category
+router.get("/category/:categoryId/subcategories", authMiddleware, getSubCategoryByCategory);
+// Get subcategories by created by
+router.get("/user/:id/subcategories", authMiddleware, getSubCategoryByCreatedBy);
+// Update subcategory
+router.patch("/update/subcategory/:id", authMiddleware, upload.single("image"), updateSubCategoryController);
+// Delete subcategory
+router.delete("/delete/subcategory/:id", authMiddleware, deleteSubCategoryController);
 export default router;
 //# sourceMappingURL=vendor.routes.js.map

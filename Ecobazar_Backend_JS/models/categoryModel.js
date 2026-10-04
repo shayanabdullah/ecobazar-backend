@@ -27,6 +27,10 @@ const categorySchema = new Schema({
         type: String,
         enum: ['active', 'inactive', 'reject'],
         default: 'inactive'
+    },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: "user",
     }
 });
 const categoryModel = model('category', categorySchema);

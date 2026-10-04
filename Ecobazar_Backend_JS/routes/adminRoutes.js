@@ -2,7 +2,8 @@ import express from "express";
 import { deleteUser, getAllUser } from "../controllers/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, createSubCategory, getSubCategory } from "../controllers/categoryController.js";
+import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, createSubCategory, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, } from "../controllers/categoryController.js";
+import { rejectSubCategory } from "../controllers/adminController.js";
 const router = express.Router();
 /**
  * @swagger
@@ -49,6 +50,7 @@ router.get("/all-users", getAllUser);
  *         description: User not found
  */
 router.post("/delete/user/:id", deleteUser);
+// Create category
 /**
  * @swagger
  * /api/v1/admin/category/create:
@@ -93,6 +95,7 @@ router.post("/delete/user/:id", deleteUser);
  *         description: Internal server error
  */
 router.post("/category/create", authMiddleware, upload.single("image"), categoryCreateController);
+// Update category
 /**
  * @swagger
  * /api/v1/admin/category/edit/{id}:
@@ -150,6 +153,7 @@ router.post("/category/create", authMiddleware, upload.single("image"), category
  *         description: Internal server error
  */
 router.patch("/category/edit/:id", authMiddleware, upload.single("image"), updateCategoryController);
+// Delete category
 /**
  * @swagger
  * /api/v1/admin/category/delete/{id}:
@@ -185,5 +189,15 @@ router.get("/categories", authMiddleware, getCategory);
 router.post("/create/subcategory", upload.single("image"), authMiddleware, createSubCategory);
 // Get all subcategories
 router.get("/subcategories", authMiddleware, getSubCategory);
+// Get subcategories by category
+router.get("/category/:categoryId/subcategories", authMiddleware, getSubCategoryByCategory);
+// Get subcategories by created by
+router.get("/user/:id/subcategories", authMiddleware, getSubCategoryByCreatedBy);
+// Update subcategory
+router.patch("/update/subcategory/:id", authMiddleware, upload.single("image"), updateSubCategoryController);
+// Delete subcategory
+router.delete("/delete/subcategory/:id", authMiddleware, deleteSubCategoryController);
+// Reject subcategory
+router.post("/reject/subcategory/:id", authMiddleware, rejectSubCategory);
 export default router;
 //# sourceMappingURL=adminRoutes.js.map
