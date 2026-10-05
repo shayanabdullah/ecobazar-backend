@@ -24,6 +24,85 @@ const getAllUser = async (req, res) => {
         });
     }
 };
+const activeUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID.",
+            });
+        }
+        const existUser = await userModel.findById(id);
+        if (!existUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+        if (existUser.status === 'active') {
+            return res.status(400).json({
+                success: false,
+                message: "User already active.",
+            });
+        }
+        const updateUser = await userModel.findByIdAndUpdate(id, {
+            status: "active",
+        });
+        return res.status(200).json({
+            success: true,
+            message: "User active successfully.",
+            data: updateUser,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error." + error.message,
+        });
+    }
+};
+const inactiveUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID.",
+            });
+        }
+        const existUser = await userModel.findById(id);
+        if (!existUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+        if (existUser.status === 'inactive') {
+            return res.status(400).json({
+                success: false,
+                message: "User already inactive.",
+            });
+        }
+        const updateUser = await userModel.findByIdAndUpdate(id, {
+            status: "inactive",
+        }, {
+            returnDocument: "after",
+            runValidators: true,
+        }).select("-password");
+        return res.status(200).json({
+            success: true,
+            message: "User inactive successfully.",
+            data: updateUser,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error." + error.message,
+        });
+    }
+};
 const deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
@@ -119,5 +198,5 @@ const rejectSubCategory = async (req, res) => {
         });
     }
 };
-export { getAllUser, deleteUser, activeSubCategory, rejectSubCategory };
+export { getAllUser, deleteUser, activeSubCategory, rejectSubCategory, activeUser, inactiveUser };
 //# sourceMappingURL=adminController.js.map

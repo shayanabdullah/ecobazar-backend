@@ -3,10 +3,12 @@ import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 import subCategoryModel from "../models/subcategory.model.js";
 import userModel from "../models/userModel.js";
 import mongoose from "mongoose";
-import { sendAdminSubCategoryCreatedEmail, sendSubCategoryApprovalEmail } from "../utils/emailSender.js";
+import { sendAdminSubCategoryCreatedEmail, sendSubCategoryApprovalEmail, } from "../utils/emailSender.js";
+import findSubCategoryByCategory from "../utils/helper.js";
 const categoryCreateController = async (req, res) => {
     try {
         const { categoryName, slug, description, status } = req.body;
+        const { userId } = req.user;
         const img = req.file;
         if (!categoryName) {
             return res.status(400).json({
@@ -49,9 +51,10 @@ const categoryCreateController = async (req, res) => {
             categoryName: categoryName.trim().toLowerCase(),
             slug: slug.trim().toLowerCase(),
             description: description?.trim() || "Explore our products in this category.",
-            status: status,
+            status: status || "active",
             image: imgUrl,
             imagePublicId: publicId,
+            createdBy: userId,
         });
         return res.status(201).json({
             success: true,
@@ -178,6 +181,44 @@ const getCategory = async (req, res) => {
             success: false,
             message: "Internal server error.",
             error: err.message,
+        });
+    }
+};
+const getCategoryByCreatedBy = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user id.",
+            });
+        }
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User was not found.",
+            });
+        }
+        const allData = await findSubCategoryByCategory(userId);
+        if (!allData.success) {
+            return res.status(404).json({
+                success: false,
+                message: allData.message,
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "SubCategorys retrieved successfully.",
+            data: allData.data,
+        });
+    }
+    catch (error) {
+        console.error("get subcategory error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            error: error.message,
         });
     }
 };
@@ -470,5 +511,5 @@ const deleteSubCategoryController = async (req, res) => {
         });
     }
 };
-export { categoryCreateController, updateCategoryController, deleteCategoryController, getCategory, createSubCategory, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, };
+export { categoryCreateController, updateCategoryController, deleteCategoryController, getCategory, createSubCategory, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, getCategoryByCreatedBy, };
 //# sourceMappingURL=categoryController.js.map
