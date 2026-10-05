@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import userModel from "../models/userModel.js";
-import categoryModel from "../models/categoryModel.js";
 import mongoose from "mongoose";
 import subCategoryModel from "../models/subcategory.model.js";
 import { sendSubCategoryRejectedEmail } from "../utils/emailSender.js";
@@ -100,7 +99,7 @@ const rejectSubCategory = async (req: Request, res: Response) => {
      const subCategory = await subCategoryModel
       .findById(id)
       .populate("createdBy", "fullName email") 
-      .populate("category", "categoryName");
+      .populate("category", "categoryName") as any
     if(!subCategory){
       return res.status(404).json({
         success: false,
