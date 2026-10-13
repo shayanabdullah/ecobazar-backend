@@ -119,34 +119,28 @@ const createProductController = async (req: Request, res: Response) => {
           .json({ success: false, message: "Variant SKU is missing." });
       }
       if (!variantSize) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: `Variant size is missing (SKU: ${variantSku}).`,
-          });
+        return res.status(400).json({
+          success: false,
+          message: `Variant size is missing (SKU: ${variantSku}).`,
+        });
       }
       if (!isValidNumber(variantPrice)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: `Invalid price (SKU: ${variantSku}).`,
-          });
+        return res.status(400).json({
+          success: false,
+          message: `Invalid price (SKU: ${variantSku}).`,
+        });
       }
       if (!isValidNumber(variantStockQuantity)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: `Invalid stockQuantity (SKU: ${variantSku}).`,
-          });
+        return res.status(400).json({
+          success: false,
+          message: `Invalid stockQuantity (SKU: ${variantSku}).`,
+        });
       }
 
       if (
-        (variantCompareAtPrice !== undefined &&
-          !Number.isFinite(variantCompareAtPrice)) ||
-        variantCompareAtPrice < variantPrice
+        variantCompareAtPrice !== undefined &&
+        (!Number.isFinite(variantCompareAtPrice) ||
+          variantCompareAtPrice < variantPrice)
       ) {
         return res.status(400).json({
           success: false,
