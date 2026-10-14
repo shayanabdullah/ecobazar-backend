@@ -2,13 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UserJwtPayload } from "../types/types.js";
 
-const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {refreshToken} = req.cookies;
+    const { refreshToken } = req.cookies;
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -24,12 +20,12 @@ const authMiddleware = (
       process.env.JWT_REFRESH_SECRET as string,
     ) as UserJwtPayload;
 
-   req.user = {
-  userId: decoded.userId,
-  email: decoded.email,
-  role: decoded.role,
-  fullName: decoded.fullName,
-};
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      fullName: decoded.fullName,
+    };
 
     next();
   } catch (error: any) {
@@ -55,7 +51,5 @@ const authMiddleware = (
     });
   }
 };
-
-
 
 export { authMiddleware };

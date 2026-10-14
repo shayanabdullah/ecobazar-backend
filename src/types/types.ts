@@ -61,7 +61,6 @@ export interface productAttributeType {
   key: string;
   label: string;
   value: string | number | boolean;
-  unit?: string;
 }
 
 export interface productVariantType {

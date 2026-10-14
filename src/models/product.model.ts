@@ -76,6 +76,8 @@ const productSchema = new Schema<productModelType>(
           default: false,
         },
       },
+
+  { _id: false },
     ],
     sku: {
       type: String,

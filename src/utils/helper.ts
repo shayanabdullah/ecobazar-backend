@@ -1,5 +1,7 @@
+import { randomBytes } from "node:crypto";
 import categoryModel from "../models/categoryModel.js";
 import subCategoryModel from "../models/subcategory.model.js";
+import productModel from "../models/product.model.js";
 
 const findSubCategoryByCategory = async (userId: string) : Promise<any> => {
     const categoryCreatedBy = await categoryModel.find({ createdBy: userId }).lean();
@@ -28,5 +30,26 @@ const findSubCategoryByCategory = async (userId: string) : Promise<any> => {
     };
 
 }
+const isValidNumber = (num: number) => {
+  return Number.isFinite(num) && num > 0;
+};
 
-export default findSubCategoryByCategory;
+const genarateUniqueSku = async (usedSku:string[]) : Promise<string> =>{
+let sku = "";
+let alreadyExist = true;
+
+while(alreadyExist === true){
+  sku = `SKU-${randomBytes(6).toString("hex")}`;
+
+  const existSku = await productModel.findOne({
+   $or: [ {sku: sku}, {'variants.sku': sku}] 
+  });
+
+  if(!Boolean(existSku) && !usedSku.includes(sku)){
+    alreadyExist = false 
+  }
+}
+return sku;
+}
+
+export { findSubCategoryByCategory, isValidNumber, genarateUniqueSku };

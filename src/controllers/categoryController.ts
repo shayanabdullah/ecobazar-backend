@@ -9,7 +9,7 @@ import {
   sendAdminSubCategoryCreatedEmail,
   sendSubCategoryApprovalEmail,
 } from "../utils/emailSender.js";
-import findSubCategoryByCategory from "../utils/helper.js";
+import {findSubCategoryByCategory} from "../utils/helper.js";
 
 const categoryCreateController = async (req: Request, res: Response) => {
   try {
