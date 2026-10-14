@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 import productModel from "../models/product.model.js";
 import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
-const isValidNumber = (num) => {
-    return Number.isFinite(num) && num > 0;
-};
+import subCategoryModel from "../models/subcategory.model.js";
+import { genarateUniqueSku, isValidNumber } from "../utils/helper.js";
+import { sendAdminProductCreatedByAdminEmail } from "../utils/emailSender.js";
 const createProductController = async (req, res) => {
     try {
-        const { productName, description, category, subCategory, brand, manufacturer, countryOfOrigin, sku, price, compareAtPrice, stockQuantity, } = req.body;
+        const { productName, description, category, subCategory, brand, manufacturer, countryOfOrigin, price, compareAtPrice, stockQuantity, } = req.body;
         const { userId, role } = req.user;
         if (role !== "admin" && role !== "vendor") {
             return res.status(403).json({
@@ -24,7 +24,7 @@ const createProductController = async (req, res) => {
                 message: "Product name is required.",
             });
         }
-        if (!category || !mongoose.Types.ObjectId.isValid(category)) {
+        if (!category.trim() || !mongoose.Types.ObjectId.isValid(category)) {
             return res.status(400).json({
                 success: false,
                 message: "A valid category is required.",
@@ -63,8 +63,8 @@ const createProductController = async (req, res) => {
         for (const item of attributes) {
             const key = item.key?.trim();
             const label = item.label?.trim();
-            const values = ["string", "number", "boolean"].includes(typeof item?.value);
-            if (!key || !label || !values) {
+            const isValidValue = ["string", "number", "boolean"].includes(typeof item?.value);
+            if (!key || !label || !isValidValue) {
                 return res.status(400).json({
                     success: false,
                     message: "Invalid attributes format",
@@ -74,16 +74,11 @@ const createProductController = async (req, res) => {
         const allVariants = [];
         const allSkus = [];
         for (const item of variants) {
-            const variantSku = String(item?.sku ?? "").trim();
+            const variantSku = await genarateUniqueSku(allSkus);
             const variantSize = String(item?.size ?? "").trim();
             const variantPrice = Number(item?.price);
             const variantStockQuantity = Number(item?.stockQuantity);
             const variantCompareAtPrice = item.compareAtPrice == null ? undefined : Number(item?.compareAtPrice);
-            if (!variantSku) {
-                return res
-                    .status(400)
-                    .json({ success: false, message: "Variant SKU is missing." });
-            }
             if (!variantSize) {
                 return res.status(400).json({
                     success: false,
@@ -127,15 +122,15 @@ const createProductController = async (req, res) => {
         let simpleCompareAtPrice;
         let simpleStockQuantity;
         if (allVariants.length === 0) {
-            simpleSku = typeof sku === "string" ? sku : "";
-            if (!simpleSku ||
-                !price ||
+            simpleSku = await genarateUniqueSku(allSkus);
+            if (simpleSku === undefined ||
+                price === undefined ||
                 price === "" ||
                 stockQuantity === undefined ||
                 stockQuantity === "") {
                 return res.status(400).json({
                     success: false,
-                    message: "SKU, price and stock quantity are required for creating a product.",
+                    message: "Price and stock quantity are required for creating a product.",
                 });
             }
             simplePrice = Number(price);
@@ -158,25 +153,6 @@ const createProductController = async (req, res) => {
             }
             allSkus.push(simpleSku);
         }
-        const skuExist = {};
-        for (const sku of allSkus) {
-            if (skuExist[sku]) {
-                return res.status(409).json({
-                    success: false,
-                    message: "Duplicate SKU found in the product.",
-                });
-            }
-            skuExist[sku] = true;
-        }
-        const exitingSku = await productModel.findOne({
-            $or: [{ sku: { $in: allSkus } }, { "variants.sku": { $in: allSkus } }],
-        });
-        if (exitingSku) {
-            return res.status(409).json({
-                success: false,
-                message: "SKU or variant SKU already exists.",
-            });
-        }
         const existingCategory = await categoryModel.findById(category);
         if (!existingCategory) {
             return res.status(404).json({
@@ -184,12 +160,26 @@ const createProductController = async (req, res) => {
                 message: "Category not found.",
             });
         }
+        if (subCategory) {
+            const existingSubCategory = await subCategoryModel.findById(subCategory);
+            if (!existingSubCategory) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Subcategory not found.",
+                });
+            }
+            if (String(existingSubCategory.category) !== String(category)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Subcategory does not belong to this category.",
+                });
+            }
+        }
         const slug = productName
             .trim()
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-|-$/g, "");
-        console.log(slug);
         if (!slug) {
             return res.status(400).json({
                 success: false,
@@ -236,6 +226,9 @@ const createProductController = async (req, res) => {
             status: role === "admin" ? "approved" : "pending",
             createdBy: userId,
         });
+        if (role === "admin") {
+            await sendAdminProductCreatedByAdminEmail(product.productName, product.productCode, existingCategory.categoryName);
+        }
         return res.status(201).json({
             success: true,
             message: "Product created successfully.",
@@ -247,6 +240,7 @@ const createProductController = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Unable to create product at this time.",
+            error: error.message,
         });
     }
 };

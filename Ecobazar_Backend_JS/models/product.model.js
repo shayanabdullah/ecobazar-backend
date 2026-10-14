@@ -67,6 +67,7 @@ const productSchema = new Schema({
                 default: false,
             },
         },
+        { _id: false },
     ],
     sku: {
         type: String,

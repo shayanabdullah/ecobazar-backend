@@ -4,7 +4,7 @@ import subCategoryModel from "../models/subcategory.model.js";
 import userModel from "../models/userModel.js";
 import mongoose from "mongoose";
 import { sendAdminSubCategoryCreatedEmail, sendSubCategoryApprovalEmail, } from "../utils/emailSender.js";
-import findSubCategoryByCategory from "../utils/helper.js";
+import { findSubCategoryByCategory } from "../utils/helper.js";
 const categoryCreateController = async (req, res) => {
     try {
         const { categoryName, slug, description, status } = req.body;
