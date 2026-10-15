@@ -6,7 +6,8 @@ import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 import subCategoryModel from "../models/subcategory.model.js";
 import { genarateUniqueSku, isValidNumber } from "../utils/helper.js";
-import { sendAdminProductCreatedByAdminEmail } from "../utils/emailSender.js";
+import { sendAdminProductCreatedByAdminEmail, sendAdminProductCreatedEmail } from "../utils/emailSender.js";
+import userModel from "../models/userModel.js";
 
 const createProductController = async (req: Request, res: Response) => {
   try {
@@ -21,6 +22,7 @@ const createProductController = async (req: Request, res: Response) => {
       price,
       compareAtPrice,
       stockQuantity,
+      isMain
     } = req.body;
 
     const { userId, role } = req.user;
@@ -45,6 +47,7 @@ const createProductController = async (req: Request, res: Response) => {
         message: "Product name is required.",
       });
     }
+
 
     if (!category.trim() || !mongoose.Types.ObjectId.isValid(category)) {
       return res.status(400).json({
@@ -245,13 +248,11 @@ const createProductController = async (req: Request, res: Response) => {
     }
     const productCode = `PRD-${Date.now().toString().toUpperCase()}`;
 
-    const { publicId: thumbnailPublicId, imgUrl: thumbnailUrl } =
-      await uploadToCloudinary(thumbnail.path, "ecobazar/products/thumbnails");
+    const { publicId: thumbnailPublicId, imgUrl: thumbnailUrl } = await uploadToCloudinary(thumbnail.path, "ecobazar/products/thumbnails");
 
-    const uploadImages: { url: string; publicId: string; altText: string }[] =
-      [];
+    const uploadImages: { url: string; publicId: string; altText: string, isMain: boolean }[] = [];
 
-    for (const img of imageFiles) {
+    for (const [index,img] of imageFiles.entries()) {
       const { publicId, imgUrl } = await uploadToCloudinary(
         img.path,
         "ecobazar/products/gallery",
@@ -260,8 +261,11 @@ const createProductController = async (req: Request, res: Response) => {
         url: imgUrl,
         publicId,
         altText: productName.trim(),
+        isMain: index === Number(isMain) ? true : false,
       });
     }
+
+ 
 
     const product = await productModel.create({
       productName: productName.trim(),
@@ -302,6 +306,28 @@ const createProductController = async (req: Request, res: Response) => {
       );
     }
 
+    if(role === "vendor"){
+      try {
+        const vendor = await userModel.findById(userId);
+        if(!vendor){
+          return res.status(404).json({
+            success: false,
+            message: "Vendor not found.",
+          });
+        }
+         await sendAdminProductCreatedEmail(
+        product.productName,
+        product.productCode,
+        existingCategory.categoryName,
+        vendor.fullName,
+        vendor.email,
+        String(product._id),
+      );
+      }  catch (emailError) {
+    console.error("Admin product notification failed:", emailError);
+  }
+    }
+
     return res.status(201).json({
       success: true,
       message: "Product created successfully.",
@@ -317,4 +343,139 @@ const createProductController = async (req: Request, res: Response) => {
   }
 };
 
-export { createProductController };
+const getAllProducts = async ( req: Request, res: Response ) => {
+  try {
+    const products = await productModel.find({status: "approved"}).populate([{
+      path: "category",
+      select: " -_id categoryName",
+    },
+    {
+      path: "subCategory",
+      select: " -_id subCategoryName",
+    },
+  ]).select("-__v -createdBy");
+    if(products.length === 0){
+      return res.status(404).json({
+        success: false,
+        message: "No products found.",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `${products.length} Products retrieved successfully.`,
+      data: products,
+    });
+  } catch (error: any) {
+    console.error("Get all products error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to get products at this time.",
+      error: error.message,
+    });
+  }
+}
+
+const getProductbyCategory = async (req: Request, res: Response) => {
+try {
+  const { categoryId } = req.params;
+  if(!categoryId.toString().trim() || !mongoose.Types.ObjectId.isValid(categoryId.toString())){
+    return res.status(400).json({
+      success: false,
+      message: "Invalid category ID.",
+    });
+  }
+
+  const existingCategory = await categoryModel.findById(categoryId);
+  if(!existingCategory){
+    return res.status(404).json({
+      success: false,
+      message: "Category not found.",
+    });
+  }
+
+  const products = await productModel.find({
+    category: categoryId, status: "approved"
+   }).populate([{
+    path: "category",
+    select: " -_id categoryName",
+  },
+  {
+    path: "subCategory",
+    select: " -_id subCategoryName",
+  },
+  ]).select("-__v -createdBy");
+  if(products.length === 0){
+    return res.status(404).json({
+      success: false,
+      message: "No products found.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `${products.length} Products retrieved successfully.`,
+    data: products,
+  });
+
+} catch (error: any) {
+  console.error("Get products by category error:", error);
+  return res.status(500).json({
+    success: false,
+    message: "Unable to get products at this time.",
+    error: error.message,
+  });
+}
+}
+const getProductbySubCategory = async (req: Request, res: Response) => {
+try {
+  const { subCategoryId } = req.params;
+  if(!subCategoryId.toString().trim() || !mongoose.Types.ObjectId.isValid(subCategoryId.toString())){
+    return res.status(400).json({
+      success: false,
+      message: "Invalid sub category ID.",
+    });
+  }
+
+  const existingCategory = await subCategoryModel.findById(subCategoryId);
+  if(!existingCategory){
+    return res.status(404).json({
+      success: false,
+      message: "Sub category not found.",
+    });
+  }
+
+  const products = await productModel.find({
+    subCategory: subCategoryId, status: "approved"
+   }).populate([{
+    path: "category",
+    select: " -_id categoryName",
+  },
+  {
+    path: "subCategory",
+    select: " -_id subCategoryName",
+  },
+  ]).select("-__v -createdBy");
+  if(products.length === 0){
+    return res.status(404).json({
+      success: false,
+      message: "No products found with sub category.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `${products.length} Products retrieved successfully.`,
+    data: products,
+  });
+
+} catch (error: any) {
+  console.error("Get products by sub category error:", error);
+  return res.status(500).json({
+    success: false,
+    message: "Unable to get products at this time.",
+    error: error.message,
+  });
+}
+}
+
+export { createProductController, getAllProducts, getProductbyCategory, getProductbySubCategory, };
