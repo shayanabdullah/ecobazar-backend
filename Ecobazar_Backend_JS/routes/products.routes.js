@@ -1,7 +1,7 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { vendorMiddleware } from '../middleware/roleMiddleware.js';
-import { createProductController, getAllProducts, getProductbyCategory, getProductbySubCategory } from '../controllers/product.controller.js';
+import { createProductController, getAllProducts, getProductbyCategory, getProductbyCreatedBy, getProductbySubCategory } from '../controllers/product.controller.js';
 import upload from '../middleware/uploadMiddleware.js';
 const router = express.Router();
 // products routes
@@ -16,5 +16,7 @@ router.get("/", getAllProducts);
 router.get("/category/:categoryId", getProductbyCategory);
 // get product by sub category
 router.get("/sub-category/:subCategoryId", getProductbySubCategory);
+// get product by creator
+router.get("/:creatorId", getProductbyCreatedBy);
 export default router;
 //# sourceMappingURL=products.routes.js.map

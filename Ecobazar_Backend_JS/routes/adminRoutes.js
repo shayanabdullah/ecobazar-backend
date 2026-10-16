@@ -1,9 +1,9 @@
 import express from "express";
-import { activeUser, deleteUser, getAllUser, inactiveUser } from "../controllers/adminController.js";
+import { activeProduct, activeUser, deleteUser, getAllUser, inactiveUser, rejectProduct } from "../controllers/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { categoryCreateController, deleteCategoryController, getCategory, updateCategoryController, createSubCategory, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, getCategoryByCreatedBy, } from "../controllers/categoryController.js";
-import { rejectSubCategory } from "../controllers/adminController.js";
+import { rejectSubCategory, activeSubCategory } from "../controllers/adminController.js";
 const router = express.Router();
 /**
  * @swagger
@@ -205,5 +205,11 @@ router.patch("/update/subcategory/:id", authMiddleware, upload.single("image"), 
 router.delete("/delete/subcategory/:id", authMiddleware, deleteSubCategoryController);
 // Reject subcategory
 router.post("/reject/subcategory/:id", authMiddleware, rejectSubCategory);
+// approve subcategory
+router.post("/approve/subcategory/:id", authMiddleware, activeSubCategory);
+// approve product
+router.post("/approve/product/:productId", authMiddleware, activeProduct);
+// reject product
+router.post("/reject/product/:productId", authMiddleware, rejectProduct);
 export default router;
 //# sourceMappingURL=adminRoutes.js.map

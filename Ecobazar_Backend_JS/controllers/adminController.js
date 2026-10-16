@@ -1,7 +1,8 @@
 import userModel from "../models/userModel.js";
 import mongoose from "mongoose";
 import subCategoryModel from "../models/subcategory.model.js";
-import { sendSubCategoryRejectedEmail } from "../utils/emailSender.js";
+import { sendSubCategoryRejectedEmail, sendVendorProductStatusEmail, } from "../utils/emailSender.js";
+import productModel from "../models/product.model.js";
 const getAllUser = async (req, res) => {
     try {
         const users = await userModel.find({}).select("-password");
@@ -40,7 +41,7 @@ const activeUser = async (req, res) => {
                 message: "User not found.",
             });
         }
-        if (existUser.status === 'active') {
+        if (existUser.status === "active") {
             return res.status(400).json({
                 success: false,
                 message: "User already active.",
@@ -78,18 +79,20 @@ const inactiveUser = async (req, res) => {
                 message: "User not found.",
             });
         }
-        if (existUser.status === 'inactive') {
+        if (existUser.status === "inactive") {
             return res.status(400).json({
                 success: false,
                 message: "User already inactive.",
             });
         }
-        const updateUser = await userModel.findByIdAndUpdate(id, {
+        const updateUser = await userModel
+            .findByIdAndUpdate(id, {
             status: "inactive",
         }, {
             returnDocument: "after",
             runValidators: true,
-        }).select("-password");
+        })
+            .select("-password");
         return res.status(200).json({
             success: true,
             message: "User inactive successfully.",
@@ -173,10 +176,10 @@ const rejectSubCategory = async (req, res) => {
                 message: "Invalid subcategory ID.",
             });
         }
-        const subCategory = await subCategoryModel
+        const subCategory = (await subCategoryModel
             .findById(id)
             .populate("createdBy", "fullName email")
-            .populate("category", "categoryName");
+            .populate("category", "categoryName"));
         if (!subCategory) {
             return res.status(404).json({
                 success: false,
@@ -198,5 +201,141 @@ const rejectSubCategory = async (req, res) => {
         });
     }
 };
-export { getAllUser, deleteUser, activeSubCategory, rejectSubCategory, activeUser, inactiveUser };
+const activeProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product ID.",
+            });
+        }
+        const product = await productModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found.",
+            });
+        }
+        if (product.status === "approved") {
+            return res.status(400).json({
+                success: false,
+                message: "Product already approved.",
+            });
+        }
+        const updateProduct = await productModel.findByIdAndUpdate(productId, {
+            status: "approved",
+        }, {
+            returnDocument: "after",
+        }).select("productName productCode description brand status createdBy").populate([
+            {
+                path: "category",
+                select: "-_id categoryName",
+            },
+            {
+                path: "subCategory",
+                select: "-_id subCategoryName",
+            },
+            {
+                path: "createdBy",
+                select: "-_id fullName role",
+            },
+        ]);
+        try {
+            const vendor = await userModel
+                .findById(product.createdBy)
+                .select("fullName email");
+            if (!vendor) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Product creator not found.",
+                });
+            }
+            await sendVendorProductStatusEmail(product.productName, product.productCode, vendor.fullName, vendor.email, "approved");
+        }
+        catch (emailError) {
+            console.error("vendor product notification failed:", emailError);
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Product approved successfully.",
+            data: updateProduct,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error." + error.message,
+        });
+    }
+};
+const rejectProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product ID.",
+            });
+        }
+        const product = await productModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found.",
+            });
+        }
+        if (product.status === "rejected") {
+            return res.status(400).json({
+                success: false,
+                message: "Product already rejected.",
+            });
+        }
+        const updateProduct = await productModel.findByIdAndUpdate(productId, {
+            status: "rejected",
+        }, {
+            returnDocument: "after",
+        }).select("productName productCode description brand createdBy status").populate([
+            {
+                path: "category",
+                select: "-_id categoryName",
+            },
+            {
+                path: "subCategory",
+                select: "-_id subCategoryName",
+            },
+            {
+                path: "createdBy",
+                select: "-_id fullName role",
+            },
+        ]);
+        try {
+            const vendor = await userModel
+                .findById(product.createdBy)
+                .select("fullName email");
+            if (!vendor) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Product creator not found.",
+                });
+            }
+            await sendVendorProductStatusEmail(product.productName, product.productCode, vendor.fullName, vendor.email, "rejected");
+        }
+        catch (emailError) {
+            console.error("vendor product notification failed:", emailError);
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Product rejected successfully.",
+            data: updateProduct,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error." + error.message,
+        });
+    }
+};
+export { getAllUser, deleteUser, activeSubCategory, rejectSubCategory, activeUser, inactiveUser, activeProduct, rejectProduct, };
 //# sourceMappingURL=adminController.js.map

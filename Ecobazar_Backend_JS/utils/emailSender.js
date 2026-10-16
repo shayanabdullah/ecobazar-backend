@@ -1255,378 +1255,6 @@ export const sendSubCategoryRejectedEmail = async (vendorEmail, vendorName, subC
         throw error;
     }
 };
-export const sendAdminProductCreatedEmail = async (productName, productCode, categoryName, vendorName, vendorEmail, productId) => {
-    try {
-        const productUrl = `${process.env.FRONTEND_URL}/admin/products/${productId}`;
-        const response = await brevo.transactionalEmails.sendTransacEmail({
-            sender: {
-                name: process.env.BREVO_SENDER_NAME,
-                email: process.env.BREVO_SENDER_EMAIL,
-            },
-            to: [
-                {
-                    email: process.env.ADMIN_EMAIL,
-                    name: process.env.ADMIN_NAME,
-                },
-            ],
-            subject: "New Product Awaiting Approval - EcoBazar",
-            htmlContent: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <meta
-              name="viewport"
-              content="width=device-width, initial-scale=1.0"
-            />
-            <title>New Product Awaiting Approval</title>
-          </head>
-
-          <body style="
-            margin:0;
-            padding:40px 20px;
-            background-color:#f4f6f4;
-            font-family:Arial,Helvetica,sans-serif;
-          ">
-            <table
-              role="presentation"
-              width="100%"
-              cellpadding="0"
-              cellspacing="0"
-              border="0"
-            >
-              <tr>
-                <td align="center">
-
-                  <table
-                    role="presentation"
-                    width="480"
-                    cellpadding="0"
-                    cellspacing="0"
-                    border="0"
-                    style="
-                      width:100%;
-                      max-width:480px;
-                      background-color:#ffffff;
-                      border-radius:10px;
-                      overflow:hidden;
-                      box-shadow:0 2px 8px rgba(0,0,0,0.05);
-                    "
-                  >
-
-                    <!-- Header -->
-                    <tr>
-                      <td align="center" style="
-                        background-color:#2e7d32;
-                        padding:24px 32px;
-                      ">
-                        <h1 style="
-                          margin:0;
-                          color:#ffffff;
-                          font-size:22px;
-                          font-weight:600;
-                          letter-spacing:0.5px;
-                        ">
-                          EcoBazar
-                        </h1>
-                      </td>
-                    </tr>
-
-                    <!-- Content -->
-                    <tr>
-                      <td style="padding:32px;">
-
-                        <h2 style="
-                          margin:0 0 16px;
-                          color:#222222;
-                          font-size:21px;
-                          font-weight:600;
-                        ">
-                          New Product Awaiting Approval
-                        </h2>
-
-                        <p style="
-                          margin:0 0 16px;
-                          color:#555555;
-                          font-size:15px;
-                          line-height:1.6;
-                        ">
-                          Hi ${process.env.ADMIN_NAME},
-                        </p>
-
-                        <p style="
-                          margin:0 0 20px;
-                          color:#555555;
-                          font-size:15px;
-                          line-height:1.6;
-                        ">
-                          A vendor has submitted a new product to
-                          EcoBazar. Please review the product details
-                          and approve or reject the submission.
-                        </p>
-
-                        <!-- Product Details -->
-                        <table
-                          role="presentation"
-                          width="100%"
-                          cellpadding="0"
-                          cellspacing="0"
-                          border="0"
-                          style="
-                            margin:0 0 24px;
-                            background-color:#f8f9f8;
-                            border-radius:6px;
-                          "
-                        >
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Product
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#333333;
-                              font-size:14px;
-                              font-weight:600;
-                            ">
-                              ${productName}
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Product Code
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#333333;
-                              font-size:14px;
-                              font-weight:600;
-                            ">
-                              ${productCode}
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Category
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#333333;
-                              font-size:14px;
-                              font-weight:600;
-                            ">
-                              ${categoryName}
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Vendor
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#333333;
-                              font-size:14px;
-                              font-weight:600;
-                            ">
-                              ${vendorName}
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Vendor Email
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#333333;
-                              font-size:12px;
-                              font-weight:600;
-                              word-break:break-word;
-                            ">
-                              ${vendorEmail}
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td style="
-                              padding:12px 16px;
-                              color:#777777;
-                              font-size:13px;
-                            ">
-                              Status
-                            </td>
-
-                            <td align="right" style="
-                              padding:12px 16px;
-                              color:#b7791f;
-                              font-size:14px;
-                              font-weight:600;
-                            ">
-                              Pending
-                            </td>
-                          </tr>
-                        </table>
-
-                        <!-- Instructions -->
-                        <p style="
-                          margin:0 0 20px;
-                          color:#555555;
-                          font-size:14px;
-                          line-height:1.6;
-                        ">
-                          Click a button below to open the product
-                          review page and make your decision.
-                        </p>
-
-                        <!-- Approve Button -->
-                        <table
-                          role="presentation"
-                          width="100%"
-                          cellpadding="0"
-                          cellspacing="0"
-                          border="0"
-                          style="margin-bottom:12px;"
-                        >
-                          <tr>
-                            <td
-                              align="center"
-                              bgcolor="#2e7d32"
-                              style="border-radius:6px;"
-                            >
-                              <a
-                                href="${productUrl}?action=approve"
-                                style="
-                                  display:block;
-                                  padding:14px 20px;
-                                  color:#ffffff;
-                                  font-size:14px;
-                                  font-weight:600;
-                                  text-decoration:none;
-                                "
-                              >
-                                Review &amp; Approve
-                              </a>
-                            </td>
-                          </tr>
-                        </table>
-
-                        <!-- Reject Button -->
-                        <table
-                          role="presentation"
-                          width="100%"
-                          cellpadding="0"
-                          cellspacing="0"
-                          border="0"
-                        >
-                          <tr>
-                            <td
-                              align="center"
-                              bgcolor="#c62828"
-                              style="border-radius:6px;"
-                            >
-                              <a
-                                href="${productUrl}?action=reject"
-                                style="
-                                  display:block;
-                                  padding:14px 20px;
-                                  color:#ffffff;
-                                  font-size:14px;
-                                  font-weight:600;
-                                  text-decoration:none;
-                                "
-                              >
-                                Review &amp; Reject
-                              </a>
-                            </td>
-                          </tr>
-                        </table>
-
-                        <!-- Notice -->
-                        <div style="
-                          margin-top:24px;
-                          padding:14px 16px;
-                          background-color:#f8f9f8;
-                          border-left:3px solid #2e7d32;
-                        ">
-                          <p style="
-                            margin:0;
-                            color:#777777;
-                            font-size:13px;
-                            line-height:1.6;
-                          ">
-                            This product is pending approval and is
-                            not yet available in the public shop.
-                            Please review the product before making
-                            your decision.
-                          </p>
-                        </div>
-
-                      </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                      <td align="center" style="
-                        padding:20px 32px;
-                        background-color:#fafafa;
-                        border-top:1px solid #eeeeee;
-                      ">
-                        <p style="
-                          margin:0;
-                          color:#aaaaaa;
-                          font-size:12px;
-                          line-height:1.5;
-                        ">
-                          &copy; ${new Date().getFullYear()} EcoBazar.
-                          All rights reserved.
-                        </p>
-                      </td>
-                    </tr>
-
-                  </table>
-
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `,
-        });
-        console.log("Admin product creation email sent:", response.messageId);
-        return response;
-    }
-    catch (error) {
-        console.error("Failed to send admin product creation email:", error);
-        throw error;
-    }
-};
 export const sendAdminProductCreatedByAdminEmail = async (productName, productCode, categoryName) => {
     try {
         const response = await brevo.transactionalEmails.sendTransacEmail({
@@ -2258,6 +1886,292 @@ export const sendAdminVendorProductCreatedEmail = async (productName, productCod
     }
     catch (error) {
         console.error("Failed to send admin product creation email:", error);
+        throw error;
+    }
+};
+export const sendVendorProductStatusEmail = async (productName, productCode, vendorName, vendorEmail, status) => {
+    try {
+        const isApproved = status === "approved";
+        const response = await brevo.transactionalEmails.sendTransacEmail({
+            sender: {
+                name: process.env.BREVO_SENDER_NAME,
+                email: process.env.BREVO_SENDER_EMAIL,
+            },
+            to: [
+                {
+                    email: vendorEmail,
+                    name: vendorName,
+                },
+            ],
+            subject: isApproved
+                ? "Your Product Has Been Approved - EcoBazar"
+                : "Product Submission Update - EcoBazar",
+            htmlContent: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1.0"
+            />
+            <title>
+              ${isApproved ? "Product Approved" : "Product Rejected"}
+            </title>
+          </head>
+
+          <body
+            style="
+              margin:0;
+              padding:40px 20px;
+              background-color:#f4f6f4;
+              font-family:Arial, Helvetica, sans-serif;
+            "
+          >
+
+            <table
+              role="presentation"
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+            >
+              <tr>
+                <td align="center">
+
+                  <table
+                    role="presentation"
+                    width="480"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                      width:100%;
+                      max-width:480px;
+                      background-color:#ffffff;
+                      border-radius:10px;
+                      overflow:hidden;
+                      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                    "
+                  >
+
+                    <!-- Header -->
+                    <tr>
+                      <td
+                        align="center"
+                        style="
+                          background-color:#2e7d32;
+                          padding:24px 32px;
+                        "
+                      >
+                        <h1
+                          style="
+                            margin:0;
+                            color:#ffffff;
+                            font-size:22px;
+                            font-weight:600;
+                            letter-spacing:0.5px;
+                          "
+                        >
+                          EcoBazar
+                        </h1>
+                      </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding:32px;">
+
+                        <h2
+                          style="
+                            margin:0 0 16px;
+                            color:#222222;
+                            font-size:21px;
+                            font-weight:600;
+                          "
+                        >
+                          ${isApproved
+                ? "Product Approved Successfully"
+                : "Product Submission Rejected"}
+                        </h2>
+
+                        <p
+                          style="
+                            margin:0 0 16px;
+                            color:#555555;
+                            font-size:15px;
+                            line-height:1.6;
+                          "
+                        >
+                          Hi ${vendorName},
+                        </p>
+
+                        <p
+                          style="
+                            margin:0 0 20px;
+                            color:#555555;
+                            font-size:15px;
+                            line-height:1.6;
+                          "
+                        >
+                          ${isApproved
+                ? "Good news! Your product has been reviewed and approved by the EcoBazar admin team. It is now eligible to appear in the public shop."
+                : "After reviewing your submission, the EcoBazar admin team has rejected your product. Please contact the admin team for feedback before submitting it again."}
+                        </p>
+
+                        <!-- Product Details -->
+                        <table
+                          role="presentation"
+                          width="100%"
+                          cellpadding="0"
+                          cellspacing="0"
+                          border="0"
+                          style="
+                            margin:0 0 24px;
+                            background-color:#f8f9f8;
+                            border-radius:6px;
+                          "
+                        >
+
+                          <tr>
+                            <td
+                              style="
+                                padding:12px 16px;
+                                color:#777777;
+                                font-size:13px;
+                              "
+                            >
+                              Product Name
+                            </td>
+
+                            <td
+                              align="right"
+                              style="
+                                padding:12px 16px;
+                                color:#333333;
+                                font-size:14px;
+                                font-weight:600;
+                              "
+                            >
+                              ${productName}
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td
+                              style="
+                                padding:12px 16px;
+                                color:#777777;
+                                font-size:13px;
+                              "
+                            >
+                              Product Code
+                            </td>
+
+                            <td
+                              align="right"
+                              style="
+                                padding:12px 16px;
+                                color:#333333;
+                                font-size:14px;
+                                font-weight:600;
+                              "
+                            >
+                              ${productCode}
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td
+                              style="
+                                padding:12px 16px;
+                                color:#777777;
+                                font-size:13px;
+                              "
+                            >
+                              Status
+                            </td>
+
+                            <td
+                              align="right"
+                              style="
+                                padding:12px 16px;
+                                color:${isApproved ? "#2e7d32" : "#c62828"};
+                                font-size:14px;
+                                font-weight:600;
+                              "
+                            >
+                              ${isApproved ? "Approved" : "Rejected"}
+                            </td>
+                          </tr>
+
+                        </table>
+
+                        <!-- Notice -->
+                        <div
+                          style="
+                            margin-top:8px;
+                            padding:14px 16px;
+                            background-color:#f8f9f8;
+                            border-left:3px solid ${isApproved ? "#2e7d32" : "#c62828"};
+                          "
+                        >
+                          <p
+                            style="
+                              margin:0;
+                              color:#777777;
+                              font-size:13px;
+                              line-height:1.6;
+                            "
+                          >
+                            ${isApproved
+                ? "Thank you for being a part of EcoBazar. Your approved product can now be displayed in our shop according to its availability and publication settings."
+                : "Your product will not be displayed in the public shop while its status is rejected. Please contact the admin team if you need clarification."}
+                          </p>
+                        </div>
+
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td
+                        align="center"
+                        style="
+                          padding:20px 32px;
+                          background-color:#fafafa;
+                          border-top:1px solid #eeeeee;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0;
+                            color:#aaaaaa;
+                            font-size:12px;
+                            line-height:1.5;
+                          "
+                        >
+                          &copy; ${new Date().getFullYear()} EcoBazar.
+                          All rights reserved.
+                        </p>
+                      </td>
+                    </tr>
+
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+
+          </body>
+        </html>
+      `,
+        });
+        console.log(`Vendor product ${status} email sent:`, response.messageId);
+        return response;
+    }
+    catch (error) {
+        console.error(`Failed to send vendor product ${status} email:`, error);
         throw error;
     }
 };
