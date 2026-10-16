@@ -6,7 +6,7 @@ import categoryModel from "../models/categoryModel.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 import subCategoryModel from "../models/subcategory.model.js";
 import { genarateUniqueSku, isValidNumber } from "../utils/helper.js";
-import { sendAdminProductCreatedByAdminEmail, sendAdminProductCreatedEmail } from "../utils/emailSender.js";
+import { sendAdminProductCreatedByAdminEmail, sendAdminVendorProductCreatedEmail } from "../utils/emailSender.js";
 import userModel from "../models/userModel.js";
 
 const createProductController = async (req: Request, res: Response) => {
@@ -315,7 +315,7 @@ const createProductController = async (req: Request, res: Response) => {
             message: "Vendor not found.",
           });
         }
-         await sendAdminProductCreatedEmail(
+         await sendAdminVendorProductCreatedEmail(
         product.productName,
         product.productCode,
         existingCategory.categoryName,
@@ -477,5 +477,60 @@ try {
   });
 }
 }
+const getProductbyCreatedBy = async (req: Request, res: Response) => {
+try {
+  const { creatorId } = req.params;
+  if(!creatorId.toString().trim() || !mongoose.Types.ObjectId.isValid(creatorId.toString())){
+    return res.status(400).json({
+      success: false,
+      message: "Invalid creator ID.",
+    });
+  }
 
-export { createProductController, getAllProducts, getProductbyCategory, getProductbySubCategory, };
+  const existingCreator = await userModel.findById(creatorId);
+  if(!existingCreator){
+    return res.status(404).json({ 
+      success: false,
+      message: "Creator not found.",
+    });
+  }
+
+  const products = await productModel.find({
+    createdBy: creatorId, status: "approved"
+   }).populate([{
+    path: "category",
+    select: " -_id categoryName",
+  },
+  {
+    path: "createdBy",
+    select: " -_id fullName email role",
+  }
+
+]).select("-__v -createdBy");
+
+  if(products.length === 0){
+    return res.status(404).json({
+      success: false,
+      message: "No products found with creator.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `${products.length} Products retrieved successfully.`,
+    data: products,
+  });
+
+} catch (error: any) {
+  console.error("Get products by creator error:", error);
+  return res.status(500).json({
+    success: false,
+    message: "Unable to get products at this time.",
+    error: error.message,
+  });
+}
+}
+
+
+
+export { createProductController, getAllProducts, getProductbyCategory, getProductbySubCategory,getProductbyCreatedBy };
