@@ -2,6 +2,7 @@ import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { categoryCreateController, createSubCategory, deleteCategoryController, updateCategoryController, getSubCategory, getSubCategoryByCategory, getSubCategoryByCreatedBy, updateSubCategoryController, deleteSubCategoryController, } from "../controllers/categoryController.js";
+import { createExcelFile } from "../controllers/product.controller.js";
 const router = express.Router();
 router.post("/category/create", authMiddleware, upload.single("image"), categoryCreateController);
 /**
@@ -102,5 +103,7 @@ router.get("/user/:id/subcategories", authMiddleware, getSubCategoryByCreatedBy)
 router.patch("/update/subcategory/:id", authMiddleware, upload.single("image"), updateSubCategoryController);
 // Delete subcategory
 router.delete("/delete/subcategory/:id", authMiddleware, deleteSubCategoryController);
+// create excel file
+router.post("/create-excel", authMiddleware, createExcelFile);
 export default router;
 //# sourceMappingURL=vendor.routes.js.map
