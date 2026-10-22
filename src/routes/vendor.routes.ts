@@ -12,6 +12,7 @@ import {
   updateSubCategoryController,
   deleteSubCategoryController,
 } from "../controllers/categoryController.js";
+import { createExcelFile } from "../controllers/product.controller.js";
 
 const router = express.Router();
 
@@ -149,5 +150,8 @@ router.delete(
   authMiddleware,
   deleteSubCategoryController,
 );
+
+// create excel file
+router.post("/create-excel", authMiddleware, createExcelFile);
 
 export default router;

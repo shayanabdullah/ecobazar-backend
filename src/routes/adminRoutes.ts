@@ -16,6 +16,7 @@ import {
   getCategoryByCreatedBy,
 } from "../controllers/categoryController.js";
 import { rejectSubCategory, activeSubCategory } from "../controllers/adminController.js";
+import { createExcelFile } from "../controllers/product.controller.js";
 
 const router = express.Router();
 
@@ -235,5 +236,7 @@ router.post("/approve/subcategory/:id", authMiddleware, activeSubCategory);
 router.post("/approve/product/:productId", authMiddleware, activeProduct);
 // reject product
 router.post("/reject/product/:productId", authMiddleware, rejectProduct);
+// create excel file
+router.post("/create-excel", authMiddleware, createExcelFile);
 
 export default router;

@@ -1,8 +1,9 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { vendorMiddleware } from '../middleware/roleMiddleware.js';
-import { createProductController, getAllProducts, getProductbyCategory, getProductbyCreatedBy, getProductbySubCategory } from '../controllers/product.controller.js';
+import { createProductController, getAllProducts, getProductbyCategory, getProductbyCreatedBy, getProductbySubCategory, uploadBulkProducts } from '../controllers/product.controller.js';
 import upload from '../middleware/uploadMiddleware.js';
+import excelUpload from '../utils/multer.file.js';
 
 const router = express.Router();
 
@@ -26,6 +27,8 @@ router.get("/sub-category/:subCategoryId", getProductbySubCategory);
 // get product by creator
 router.get("/:creatorId", getProductbyCreatedBy);
 
+// bulk upload products
+router.post("/bulk-upload", excelUpload.single("file"), authMiddleware, vendorMiddleware,  uploadBulkProducts)
 
 
 export default router;

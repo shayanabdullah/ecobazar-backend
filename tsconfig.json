@@ -20,6 +20,6 @@
 
     "sourceMap": true
   },
-  "include": ["src", "swagger"],
+  "include": ["src", "swagger", "test.js"],
   "exclude": ["node_modules", "dist"]
 }
