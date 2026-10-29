@@ -452,6 +452,7 @@ const getProductbyCategory = async (req: Request, res: Response) => {
     });
   }
 };
+
 const getProductbySubCategory = async (req: Request, res: Response) => {
   try {
     const { subCategoryId } = req.params;
@@ -510,6 +511,7 @@ const getProductbySubCategory = async (req: Request, res: Response) => {
     });
   }
 };
+
 const getProductbyCreatedBy = async (req: Request, res: Response) => {
   try {
     const { creatorId } = req.params;
@@ -570,6 +572,7 @@ const getProductbyCreatedBy = async (req: Request, res: Response) => {
   }
 };
 
+// Upload bulk products
 const uploadBulkProducts = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.user;
@@ -867,7 +870,8 @@ const uploadBulkProducts = async (req: Request, res: Response) => {
   }
 };
 
-async function createExcelFile(request: Request, response: Response) {
+// Create Excel file
+const createExcelFile = async (request: Request, response: Response) => {
   const {
     fileName,
     location,
@@ -876,78 +880,544 @@ async function createExcelFile(request: Request, response: Response) {
     excelFontWeight,
     excelBackgroundColor,
   } = request.body;
+
+  const { role, userId } = request.user;
+
   if (!fileName) {
     return response.status(400).json({
       success: false,
       message: "File name is required.",
     });
   }
-  
 
-  const products = await productModel.find({}).select(" -_id productName price compareAtPrice slug productCode description category brand manufacturer countryOfOrigin thumbnail, images, sku, stockQuantity variants attributes status").lean() 
-
+  const Productdata = await productModel
+    .find({ status: "approved" })
+    .select(
+      " -_id productName price compareAtPrice slug productCode description category brand manufacturer countryOfOrigin thumbnail, images, sku, stockQuantity variants attributes status",
+    )
+    .lean()
+    .populate({ path: "createdBy", select: " -_id name role" });
+  const products =
+    role === "vendor"
+      ? await productModel
+          .find({ status: "approved", createdBy: userId })
+          .select(
+            "-_id productName price compareAtPrice slug productCode description category brand manufacturer countryOfOrigin thumbnail images sku stockQuantity variants attributes status",
+          )
+          .lean()
+      : Productdata;
   if (products.length === 0) {
     return response.status(400).json({
       success: false,
       message: "No products found in the database.",
     });
   }
-const data = [];
+  const data = [];
 
+  const headerStyle = {
+    fontWeight: excelFontWeight?.trim() || "bold",
+    backgroundColor: excelBackgroundColor?.trim() || "#0E2841",
+    textColor: excelTextColor?.trim() || "#FFFFFF",
+  };
 
-const headerStyle = {
-  fontWeight: excelFontWeight?.trim() || "bold",
-  backgroundColor: excelBackgroundColor?.trim() || "#0E2841",
-  textColor: excelTextColor?.trim() || "#FFFFFF",
-};
+  type ProductKey = keyof (typeof products)[number];
 
-type ProductKey = keyof (typeof products)[number];
+  const productKeys = Object.keys(products[0]) as ProductKey[];
 
-const productKeys = Object.keys(products[0]) as ProductKey[];
+  const excelHeader: any[] = productKeys.map((key) => ({
+    value: key.trim(),
+    ...headerStyle,
+  }));
 
-const excelHeader : any[] = productKeys.map((key) => ({
-  value : key.trim(),
-  ...headerStyle,
-}));
-
-const excelData = products.map((product) => (
+  const excelData = products.map((product) =>
     productKeys.map((key) => {
-      const value = product[key] ?? "";      
-    if (value == null) return "";
+      const value = product[key] ?? "";
+      if (value == null) return "";
 
-    if (Array.isArray(value) || typeof value === "object") {
-      return JSON.stringify(value);
-    }
+      if (Array.isArray(value) || typeof value === "object") {
+        return JSON.stringify(value);
+      }
 
-    return String(value);
- })
-))
+      return String(value);
+    }),
+  );
 
-data.push(excelHeader, ...excelData);
+  data.push(excelHeader, ...excelData);
 
+  const columns: any[] = [];
 
+  for (const item of excelData) {
+    item.forEach((value) => {
+      columns.push({ width: value.length + 10 });
+    });
+  }
 
-const columns : any[] = [];
-
-for(const item of excelData){
-  item.forEach((value) => {
-    columns.push({width: value.length + 10});
-  })
-
-}
-
-
-
-await writeExcelFile(data, {
-  columns,
-}).toFile(`${location}\\${fileName}.xlsx`);
-
+  await writeExcelFile(data, {
+    columns,
+  }).toFile(`${location}\\${fileName}.xlsx`);
 
   response.send({
     success: true,
     message: `Excel file created at ${location}\\${fileName}.xlsx successfully.`,
   });
-}
+};
+
+// Edit products
+const editProducts = async (req: Request, res: Response) => {
+  try {
+    const {
+      productName,
+      description,
+      category,
+      subCategory,
+      brand,
+      manufacturer,
+      countryOfOrigin,
+      price,
+      compareAtPrice,
+      stockQuantity,
+      deleteImg,
+      variants,
+      attributes,
+      deleteMultipleImg,
+    } = req.body;
+    const { id } = req.params;
+    const { userId } = req.user;
+    const products = await productModel.findOne({
+      _id: id,
+      status: "approved",
+      createdBy: userId,
+    });
+
+    if (!products) {
+      return res.status(400).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+
+    const files = req.files as
+      | { [field: string]: Express.Multer.File[] | undefined }
+      | undefined;
+    const isMain =
+      req.body.isMain !== undefined && req.body.isMain !== ""
+        ? Number(req.body.isMain)
+        : undefined;
+    const deleteIndex =
+      deleteImg !== undefined && deleteImg !== ""
+        ? Number(deleteImg)
+        : undefined;
+
+    const productPrice = price ? Number(price.trim()) : products?.price;
+
+    const productCompareAtPrice = compareAtPrice
+      ? Number(compareAtPrice.trim())
+      : products?.compareAtPrice;
+    const productStockQuantity = stockQuantity
+      ? Number(stockQuantity.trim())
+      : products?.stockQuantity;
+
+    const images = [...(products.images ?? [])];
+    const imgFiles = files?.images ?? [];
+
+    const mainVariant = variants ? JSON.parse(variants) : [];
+    const mainAttributes = attributes ? JSON.parse(attributes) : [];
+
+    if (imgFiles !== undefined) {
+      for (const file of imgFiles) {
+        const { publicId, imgUrl } = await uploadToCloudinary(
+          file.path,
+          "ecobazar/products/gallery",
+        );
+        images.push({
+          url: imgUrl,
+          isMain: false,
+          publicId,
+        });
+        products.images = images;
+      }
+    }
+
+    if (isMain !== undefined && products.images?.length) {
+      if (
+        !Number.isInteger(isMain) ||
+        isMain < 0 ||
+        isMain > products.images?.length - 1
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid main image index.",
+        });
+      }
+
+      products.images?.forEach((img, index) => {
+        img.isMain = index === isMain;
+      });
+    }
+
+    if (deleteIndex !== undefined) {
+      if (
+        !Number.isInteger(deleteIndex) ||
+        deleteIndex < 0 ||
+        deleteIndex >= images?.length
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid delete image index.",
+        });
+      }
+      const deleteImg = images[deleteIndex];
+      images.splice(deleteIndex, 1);
+      products.images = images;
+
+      if (deleteImg?.isMain && images.length > 0) {
+        images[0].isMain = true;
+      }
+    }
+
+    // delete multiple images
+    if (deleteMultipleImg !== undefined) {
+      if (deleteMultipleImg.trim() == "all") {
+        images.splice(0, images.length);
+        products.images = images;
+        await products.save();
+        return res.status(200).json({
+          success: true,
+          message: "all Images deleted successfully",
+        });
+      }
+
+      const deleteIndex = deleteMultipleImg
+        ? JSON.parse(deleteMultipleImg.trim())
+        : undefined;
+      const allIndexs = Array.isArray(deleteIndex)
+        ? deleteIndex.map((item) =>
+            typeof item === "string" ? Number(item) : item,
+          )
+        : String(deleteIndex)
+            ?.split("")
+            .map((item) => (typeof item === "string" ? Number(item) : item));
+
+      for (const index of allIndexs) {
+        if (
+          !Number.isInteger(index) ||
+          index < 0 ||
+          index > images.length - 1
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid image index.",
+          });
+        }
+      }
+
+      allIndexs.sort((a, b) => b - a); // big number to small
+
+      // Delete images
+      for (const index of allIndexs) {
+        const deleteMultiImg = images[index];
+
+        images.splice(index, 1);
+
+        if (deleteMultiImg?.isMain && images.length > 0) {
+          images.forEach((img, i) => {
+            img.isMain = i === 0;
+          });
+        }
+      }
+
+      products.images = images;
+    }
+
+    if (productName !== undefined && productName.trim().length <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name cannot be empty.",
+      });
+    }
+
+    if (
+      productPrice !== undefined &&
+      (!Number.isFinite(productPrice) || productPrice <= 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a positive number.",
+      });
+    }
+
+    if (
+      productCompareAtPrice !== undefined &&
+      (!Number.isFinite(productCompareAtPrice) || productCompareAtPrice <= 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Compare-at price must be a positive number.",
+      });
+    }
+
+    if (
+      productCompareAtPrice != undefined &&
+      productPrice !== undefined &&
+      productCompareAtPrice <= productPrice
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Compare-at price must be greater than price.",
+      });
+    }
+
+    if (category !== undefined) {
+      if (!mongoose.Types.ObjectId.isValid(category)) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid category is required.",
+        });
+      }
+      const existingCategory = await categoryModel.findById(category);
+      if (!existingCategory) {
+        return res.status(404).json({
+          success: false,
+          message: "Category not found.",
+        });
+      }
+    }
+
+    if (
+      subCategory !== undefined &&
+      !mongoose.Types.ObjectId.isValid(subCategory)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subcategory ID.",
+      });
+    }
+
+    if (
+      (brand !== undefined && brand.trim().length <= 0) ||
+      (manufacturer !== undefined && manufacturer.trim().length <= 0) ||
+      (countryOfOrigin !== undefined && countryOfOrigin.trim().length <= 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "you cant set empty brand, manufacturer, and country of origin.",
+      });
+    }
+
+    if (productPrice !== undefined || compareAtPrice !== undefined) {
+      if (!Number.isInteger(productPrice)) {
+        return res.status(400).json({
+          success: false,
+          message: "Price must be a positive Number.",
+        });
+      }
+
+      if (
+        !Number.isInteger(productCompareAtPrice) ||
+        (productPrice !== undefined &&
+          productCompareAtPrice !== undefined &&
+          productCompareAtPrice <= productPrice)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "compare price must be a positive Number and greater than price.",
+        });
+      }
+    }
+    if (productStockQuantity !== undefined) {
+      if (!Number.isInteger(productStockQuantity)) {
+        return res.status(400).json({
+          success: false,
+          message: "Stock quantity must be a positive Number.",
+        });
+      }
+      if (productStockQuantity < 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Stock quantity nust be at least 1.",
+        });
+      }
+    }
+
+    if (
+      (variants !== undefined && mainVariant.length > 0) ||
+      (attributes !== undefined && mainAttributes.length > 0)
+    ) {
+      if (!Array.isArray(mainVariant) || !Array.isArray(mainAttributes)) {
+        return res.status(400).json({
+          success: false,
+          message: "Variants and attributes must be JSON arrays.",
+        });
+      }
+
+      // Edit attributes
+      const updatedAttributes: productAttributeType[] = [];
+
+      for (const item of mainAttributes) {
+        const key = item.key?.trim();
+        const label = item.label?.trim();
+
+        const isValidValue = ["string", "number", "boolean"].includes(
+          typeof item?.value,
+        );
+
+        if (!key || !label || !isValidValue) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid attributes format.",
+          });
+        }
+
+        // Check duplicate key
+        const existAttribute = updatedAttributes.some(
+          (attribute) => attribute.key === key,
+        );
+
+        if (existAttribute) {
+          return res.status(400).json({
+            success: false,
+            message: "Same attribute already exists.",
+          });
+        }
+
+        updatedAttributes.push({
+          ...item,
+          key,
+          label,
+        });
+      }
+
+      products.attributes = updatedAttributes;
+
+      // Edit variants
+      if (variants !== undefined) {
+        if (!Array.isArray(mainVariant)) {
+          return res.status(400).json({
+            success: false,
+            message: "Variants must be a JSON array.",
+          });
+        }
+
+        const updatedVariants: productVariantType[] = [];
+        const allSizes = new Set<string>();
+        const allSkus: string[] = [];
+
+        for (const item of mainVariant) {
+          const variantSize = String(item?.size ?? "").trim();
+          const variantPrice = Number(item?.price);
+          const variantStockQuantity = Number(item?.stockQuantity);
+
+          const variantCompareAtPrice =
+            item.compareAtPrice == null
+              ? undefined
+              : Number(item.compareAtPrice);
+
+          if (!variantSize) {
+            return res.status(400).json({
+              success: false,
+              message: "Variant size is missing.",
+            });
+          }
+
+          if (allSizes.has(variantSize)) {
+            return res.status(400).json({
+              success: false,
+              message: "Duplicate variant size.",
+            });
+          }
+
+          allSizes.add(variantSize);
+
+          if (!isValidNumber(variantPrice)) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid price for variant ${variantSize}.`,
+            });
+          }
+
+          if (!isValidNumber(variantStockQuantity)) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid stock quantity for variant ${variantSize}.`,
+            });
+          }
+
+          if (
+            variantCompareAtPrice !== undefined &&
+            (!Number.isFinite(variantCompareAtPrice) ||
+              variantCompareAtPrice <= variantPrice)
+          ) {
+            return res.status(400).json({
+              success: false,
+              message: "Compare-at price must be greater than price.",
+            });
+          }
+
+          const variantSku = await genarateUniqueSku(allSkus);
+
+          updatedVariants.push({
+            ...item,
+            sku: variantSku,
+            size: variantSize,
+            price: variantPrice,
+            compareAtPrice: variantCompareAtPrice,
+            stockQuantity: variantStockQuantity,
+            isDefault: item.isDefault === true,
+            isActive: item.isActive !== false,
+          });
+
+          allSkus.push(variantSku);
+        }
+
+        products.variants = updatedVariants;
+      }
+    }
+
+    if (productName !== undefined) products.productName = productName.trim();
+
+    if (description !== undefined) products.description = description;
+
+    if (subCategory !== undefined) products.subCategory = subCategory;
+
+    if (brand !== undefined) products.brand = brand.trim();
+
+    if (manufacturer !== undefined) products.manufacturer = manufacturer.trim();
+
+    if (countryOfOrigin !== undefined)
+      products.countryOfOrigin = countryOfOrigin.trim();
+
+    if (productPrice !== undefined) products.price = productPrice;
+
+    if (productCompareAtPrice !== undefined) {
+      products.compareAtPrice = productCompareAtPrice;
+    }
+
+    if (productStockQuantity !== undefined) {
+      products.stockQuantity = productStockQuantity;
+    }
+
+    await products.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Product edited successfully.",
+    });
+  } catch (error) {
+    console.error("editProducts error:", error);
+    console.log("Headers already sent:", res.headersSent);
+
+    if (res.headersSent) {
+      console.error("Response was already sent. Find the earlier response.");
+      return;
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Unable to edit products.",
+    });
+  }
+};
 
 export {
   createProductController,
@@ -957,4 +1427,5 @@ export {
   getProductbyCreatedBy,
   uploadBulkProducts,
   createExcelFile,
+  editProducts,
 };

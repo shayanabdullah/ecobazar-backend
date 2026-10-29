@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 
+/$HOME/.claude-omniroute/
 # Environment variables
 .env
 .env.local
@@ -15,6 +16,8 @@ out/
 env.txt
 # TypeScript
 *.tsbuildinfo
+
+
 
 # Logs
 logs/

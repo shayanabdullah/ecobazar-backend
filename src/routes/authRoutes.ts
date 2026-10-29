@@ -87,29 +87,16 @@ router.post("/login", loginController);
  * /api/v1/auth/send/otp:
  *   post:
  *     summary: Send account verification OTP
- *     description: Sends a 6-digit verification code to the authenticated user's email address.
+ *     description: Sends a 6-digit verification code to the authenticated user's email address. The user ID is taken from the authenticated JWT, not the request body.
  *     tags:
  *       - Authentication
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - userId
- *             properties:
- *               userId:
- *                 type: string
- *                 example: 68c123456789abcdef123456
- *                 description: MongoDB ID of the user whose account needs to be verified.
  *     responses:
  *       200:
  *         description: Verification OTP sent successfully
  *       400:
- *         description: Account is already verified or required details are missing
+ *         description: Account is already verified
  *       404:
  *         description: User account not found
  *       500:
@@ -123,7 +110,7 @@ router.post("/send/otp", authMiddleware, sendOtpController);
  * /api/v1/auth/verify/otp:
  *   post:
  *     summary: Verify user account with OTP
- *     description: Verifies the authenticated user's email address using the OTP sent to their email.
+ *     description: Verifies the authenticated user's email address using the OTP sent to their email. The user ID is taken from the authenticated JWT, not the request body.
  *     tags:
  *       - Authentication
  *     security:
@@ -135,13 +122,8 @@ router.post("/send/otp", authMiddleware, sendOtpController);
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - otp
  *             properties:
- *               userId:
- *                 type: string
- *                 example: 68c123456789abcdef123456
- *                 description: MongoDB ID of the user.
  *               otp:
  *                 type: string
  *                 example: "482731"
@@ -163,8 +145,11 @@ router.post("/verify/otp", authMiddleware, verifyOtpController);
  * /api/v1/auth/forgot-password:
  *   post:
  *     summary: Request password reset
+ *     description: Sends password reset instructions to the email address associated with the account.
  *     tags:
  *       - Authentication
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -180,8 +165,12 @@ router.post("/verify/otp", authMiddleware, verifyOtpController);
  *     responses:
  *       200:
  *         description: Password reset request processed successfully
+ *       400:
+ *         description: Email is required
  *       404:
  *         description: User not found
+ *       500:
+ *         description: Internal server error
  */
 router.post("/forgot-password", authMiddleware, forgotPasswordController);
 
@@ -223,6 +212,36 @@ router.post("/forgot-password", authMiddleware, forgotPasswordController);
  */
 router.post("/reset-password/:token", authMiddleware, resetPasswordController);
 
+/**
+ * @swagger
+ * /api/v1/auth/refresh-token:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Generates a new access token using a valid refresh token stored in the `refreshToken` cookie.
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Access token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Access token refreshed successfully.
+ *                 accessToken:
+ *                   type: string
+ *                   description: New short-lived JWT access token.
+ *       401:
+ *         description: Invalid or missing refresh token
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/refresh-token", refreshAccessTokenController);
 
 export default router;
